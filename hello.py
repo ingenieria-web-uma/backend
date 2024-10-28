@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, jsonify
 import pymongo
 
 app = Flask(__name__)
@@ -9,15 +9,25 @@ db = client.laWiki
 
 @app.route("/")
 def hello_world():
-    # Insertar datos en MongoDB
-    result = db.entradas.insert_many(
-        [
-            {"x": 1, "tags": ["dog", "cat"]}
-        ]
-    )
-    
-    # Mostrar los IDs de los documentos insertados
-    return f"Documentos insertados: {result.inserted_ids}"
+    return "<p>Hello, World!</p>"
+
+@app.route("/upload_users")
+def hello_blose():
+    users = ["pedro", "blose", "migue", "pablo", "oscar", "inbal"]
+    for i in users:
+        db.entradas.insert_many(
+            [
+                {"user":i}
+            ]
+        )
+    return "<p>En esta pagina se cargaran los usuarios a la db</p>"
+
+@app.route("/get_users")
+def get_users():
+    entradas = db.entradas.find()
+    resultado = [{"id": str(entrada["_id"]), "user": entrada["user"]} for entrada in entradas]
+    return jsonify(resultado)
+
 
 # Ejecutar la aplicación Flask
 if __name__ == "__main__":

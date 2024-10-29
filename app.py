@@ -1,10 +1,11 @@
 from flask import Flask
-from entrada_service import entrada_bp
+
+from version_service import version_bp
 
 app = Flask(__name__)
 
 # Registrar los microservicios como Blueprints
-app.register_blueprint(entrada_bp, url_prefix="/entradas")
+app.register_blueprint(version_bp, url_prefix="/entradas")
 
 @app.route("/")
 def main_route():

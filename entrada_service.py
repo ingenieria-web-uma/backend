@@ -1,6 +1,5 @@
 from flask import Blueprint, jsonify, request
 import pymongo
-from bson import ObjectId  
 
 entrada_bp = Blueprint('entrada_bp', __name__)
 
@@ -45,7 +44,7 @@ def update_entry():
 
 @entrada_bp.route("/g")
 def get_entry():
-    
+
     t = request.args.get('t')
 
     if t: #Si existe una entrada con titulo => t buscamos parametrizadamente, si es null devolvemos todos y si no existe pues error

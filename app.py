@@ -1,10 +1,23 @@
 from flask import Flask
+from flask_swagger_ui import get_swaggerui_blueprint
 
 from version_service import version_bp
 
 app = Flask(__name__)
 
+SWAGGER_URL = '/docs'
+API_URL = '/static/swagger.yaml'
+
+swaggerui_bp = get_swaggerui_blueprint(
+    SWAGGER_URL,
+    API_URL,
+    config = {
+        'app_name': "laWiki"
+    }
+)
+
 # Registrar los microservicios como Blueprints
+app.register_blueprint(swaggerui_bp)
 app.register_blueprint(version_bp, url_prefix="/entradas")
 
 @app.route("/")

@@ -12,7 +12,8 @@ swaggerui_bp = get_swaggerui_blueprint(
     SWAGGER_URL,
     API_URL,
     config = {
-        'app_name': "laWiki"
+        'app_name': "laWiki",
+        'layout': "BaseLayout"
     }
 )
 

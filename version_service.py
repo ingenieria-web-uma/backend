@@ -14,6 +14,8 @@ comentarios = db.comentarios
 
 #Cuando entramos a /entradas accederemos aqui
 
+# MicroServicio de VERSIONES
+
 # get entradas. ?titulo=<entrada> para filtrar por similitud en nombre (cRud)
 @version_bp.route("/", methods = ['GET'])
 def get_entry():
@@ -74,6 +76,7 @@ def create_entry():
         else:
             return f"<p>La entrada con nombreEntrada {datos['nombreEntrada']} ya existe</p>"
 
+# MicroServicio de COMENTARIOS
 
 # obtener todos los comentarios de un slug específico
 @version_bp.route("/<slug>/comments", methods = ['GET'])

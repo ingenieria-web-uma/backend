@@ -1,8 +1,9 @@
+import json
+
 import pymongo
-from flask import Blueprint, jsonify, request
 from bson import json_util
 from bson.objectid import ObjectId
-import json
+from flask import Blueprint, jsonify, request
 
 version_bp = Blueprint('version_bp', __name__)
 
@@ -60,15 +61,15 @@ def create_entry():
     if not datos:
         return "<p>Error al insertar una nueva entrada. Los valores no son válidos</p>"
     
-    nombreEntrada = datos["nombreEntrada"]
-    datos["slug"] = nombreEntrada.lower().replace(" ", "-")
+    nombre = datos["nombre"]
+    datos["slug"] = nombre.lower().replace(" ", "-")
 
     #Manejo de nulos
-    if nombreEntrada == None:
+    if nombre == None:
         return f"<p>La entrada no es valida</p>"
 
-    if nombreEntrada: #Si existe una entrada con nombreEntrada => t buscamos parametrizadamente, si es null devolvemos todos y si no existe pues error
-        entrada = coleccion.find_one({"nombreEntrada": nombreEntrada})
+    if nombre: #Si existe una entrada con nombreEntrada => t buscamos parametrizadamente, si es null devolvemos todos y si no existe pues error
+        entrada = coleccion.find_one({"nombre": nombre})
 
         if not entrada:
             coleccion.insert_one(datos)
@@ -122,4 +123,3 @@ def update_comments(slug):
         comentarios.find_one_and_update({"_id":ObjectId(idFiltro)}, actualizado)
         return f"Comentario {idFiltro} actualizado con exito"
     return f"Comentario {idFiltro} no encontrado. No se ha podido actualizar"
-

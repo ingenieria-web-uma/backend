@@ -1,14 +1,19 @@
 import json
+import os
 
 import pymongo
 from bson import json_util
 from bson.objectid import ObjectId
+from dotenv import load_dotenv
 from flask import Blueprint, jsonify, request
+
+load_dotenv()
+MONGO_URL = os.getenv("MONGO_URL")
 
 version_bp = Blueprint('version_bp', __name__)
 
 # Configuración de MongoDB
-client = pymongo.MongoClient('mongodb+srv://admin:adminadmin@cluster0.gdoyn.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
+client = pymongo.MongoClient(MONGO_URL)
 db = client.laWiki
 coleccion = db.entradas
 comentarios = db.comentarios

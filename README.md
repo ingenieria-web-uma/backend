@@ -1,4 +1,4 @@
-# Backend 
+# Backend
 Desarrollado en python con el framework flask para laWiki
 
 ## Despliegue
@@ -15,4 +15,4 @@ docker-compose up -d
 
 3. Acceder a la aplicación
 
-Desde un navegador con el enlace http://localhost:5001 se accede al servicio entradas-versiones.
+Desde un navegador con el enlace http://localhost:5000.

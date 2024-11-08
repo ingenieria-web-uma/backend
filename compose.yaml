@@ -1,4 +1,16 @@
 services:
+  wikis:
+    build:
+      context: .
+      dockerfile: services/wikis/Dockerfile
+    container_name: wikis
+    env_file:
+      - .env
+    networks:
+      - red
+    ports:
+      - 5000:5000
+
   entradas-versiones:
     build:
       context: .

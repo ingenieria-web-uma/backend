@@ -1,5 +1,5 @@
 ARG PYTHON_VERSION=3.13.0
-FROM python:${PYTHON_VERSION}-slim as base
+FROM python:${PYTHON_VERSION}-slim AS base
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
@@ -15,14 +15,19 @@ RUN adduser \
     --uid "${UID}" \
     appuser
 
+ARG COPY_REQUIREMENTS=false
+COPY ${COPY_REQUIREMENTS:+../../requirements.txt} .
+
 RUN --mount=type=cache,target=/root/.cache/pip \
     --mount=type=bind,source=requirements.txt,target=requirements.txt \
     python -m pip install -r requirements.txt
 
 USER appuser
 
-COPY . .
+ARG SERVICE_PATH
+COPY ${SERVICE_PATH} .
 
-EXPOSE 80
+ARG SERVICE_PORT
+EXPOSE ${SERVICE_PORT}
 
 CMD ["python", "app.py"]

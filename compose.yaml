@@ -1,51 +1,53 @@
+x-service-base: &service-base
+  build:
+    context: .
+    dockerfile: Dockerfile
+  env_file:
+    - .env
+  networks:
+    - red
+
 services:
   gateway:
+    <<: *service-base
     build:
-      context: .
-      dockerfile: Dockerfile
+      args:
+        COPY_REQUIREMENTS: "false"
+        SERVICE_PATH: .
+        SERVICE_PORT: ${SERVICE_GATEWAY_PORT}
     container_name: gateway
-    env_file:
-      - .env
-    networks:
-      - red
     ports:
-      - 80:80
+      - ${SERVICE_GATEWAY_PORT}:${SERVICE_GATEWAY_PORT}
 
   wikis:
+    <<: *service-base
     build:
-      context: .
-      dockerfile: services/wikis/Dockerfile
+      args:
+        SERVICE_PATH: services/wikis
+        SERVICE_PORT: ${SERVICE_WIKIS_PORT}
     container_name: wikis
-    env_file:
-      - .env
-    networks:
-      - red
     ports:
-      - 5000:5000
+      - ${SERVICE_WIKIS_PORT}:${SERVICE_WIKIS_PORT}
 
   entradas-versiones:
+    <<: *service-base
     build:
-      context: .
-      dockerfile: services/entradas_versiones/Dockerfile
+      args:
+        SERVICE_PATH: services/entradas_versiones
+        SERVICE_PORT: ${SERVICE_ENTRADAS_PORT}
     container_name: entradas_versiones
-    env_file:
-      - .env
-    networks:
-      - red
     ports:
-      - 5001:5001
+      - ${SERVICE_ENTRADAS_PORT}:${SERVICE_ENTRADAS_PORT}
 
   comentarios-valoraciones:
+    <<: *service-base
     build:
-      context: .
-      dockerfile: services/comentarios_valoraciones/Dockerfile
+      args:
+        SERVICE_PATH: services/comentarios_valoraciones
+        SERVICE_PORT: ${SERVICE_COMENTARIOS_PORT}
     container_name: comentarios_valoraciones
-    env_file:
-      - .env
-    networks:
-      - red
     ports:
-      - 5002:5002
+      - ${SERVICE_COMENTARIOS_PORT}:${SERVICE_COMENTARIOS_PORT}
 
 networks:
   red:

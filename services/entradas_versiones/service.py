@@ -95,6 +95,17 @@ def delete_entry(id):
     else:
         return jsonify({"error": "Entrada no encontrada"}), 404
 
+# DELETE /entradas/ : JSON {idWiki:"xxxxxxxxx"} Borra las entradas asociadas a una wiki
+@version_bp.route("/", methods=['DELETE'])
+def delete_entries_byWikiId():
+    body = request.json
+    idWiki = body["idWiki"]
+    if idWiki:
+        result = entradas.delete_many({"idWiki":ObjectId(idWiki)})
+        return {f"Se han borrado {result.deleted_count} entradas relacionadas con la wiki"}, 200
+    else:
+        return {"error":f"Error al eliminar las entradas asociadas a la wiki {idWiki}","status_code":400}
+
 # GET /entradas?nombre&idWiki
 @version_bp.route("/", methods=['GET'])
 def get_entries_by_name_and_idwiki():
@@ -124,8 +135,8 @@ def get_wikis_for_entry(id):
         else:
             wiki_raw = requests.get(f"http://{wikiServiceName}:{wikiServicePort}/wikis/{wiki_id}")
 
-        if wiki_raw.status_code is 200:
-            return jsonify(wiki_raw.json())
+        if wiki_raw.status_code == 200:
+            return jsonify(wiki_raw.json()),200
         else:
             return {"error":"Error al obtener la wiki de la entrada", "status_code":400}
     else:

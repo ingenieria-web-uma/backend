@@ -3,7 +3,7 @@ from flask_swagger_ui import get_swaggerui_blueprint
 from dotenv import load_dotenv
 import os
 
-from wikis_service import wikis_bp
+from service import wikis_bp
 
 load_dotenv()
 

@@ -5,7 +5,6 @@ from bson.objectid import ObjectId
 import os
 from flask import Blueprint, jsonify, request
 import json
-import requests
 
 load_dotenv()
 MONGO_URL = os.getenv("MONGO_URL")
@@ -36,7 +35,7 @@ def get_wikis():
 
 @wikis_bp.route("/<id>", methods = ["GET"])
 def get_wikis_byId(id):
-    resultado = wikis.find_one({"_id":ObjectId(id)})  
+    resultado = wikis.find_one({"_id":ObjectId(id)})
     if resultado:
         print("Busqueda de wiki por id")
         resultado_json = json.loads(json_util.dumps(resultado))
@@ -44,13 +43,13 @@ def get_wikis_byId(id):
     else:
         print(f"Error al obtener la wiki con id {id}")
         return {"error":"Wiki con id especificado no encontrada", "status_code":404}
-        
+
 #POST /wikis/
 
 @wikis_bp.route("/", methods = ['POST'])
 def create_wiki():
     datos = request.json
-    
+
     if not datos or not datos["nombre"]:
         print("Error: Parametros de entrada inválidos")
 
@@ -63,7 +62,7 @@ def create_wiki():
         wikis.insert_one(datos)
         return f"<p>La wiki con el nombre {nombre} ha sido creada correctamente </p>"
 
-#PUT /wikis/<id>       
+#PUT /wikis/<id>
 
 @wikis_bp.route("/<id>", methods=["PUT"])
 def update_wiki(id):
@@ -76,7 +75,7 @@ def update_wiki(id):
         return {"error":f"Error al actualizar la wiki {id}", "status_code":404}
     else:
         return {"response":f"Wiki {respuesta["nombre"]} modificada correctamente", "status_code":200}
-    
+
 #DELETE /wikis/<id>
 
 @wikis_bp.route("/<id>", methods=['DELETE'])
@@ -94,7 +93,7 @@ def delete_wiki(id):
         else:
             return "Borrado exitoso"
 
-    
+
 #GET /wikis/<id>/entradas
 
 @wikis_bp.route("/<id>/entradas", methods=['GET'])

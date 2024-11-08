@@ -15,77 +15,109 @@ version_bp = Blueprint('version_bp', __name__)
 # Configuración de MongoDB
 client = pymongo.MongoClient(MONGO_URL)
 db = client.laWiki
-coleccion = db.entradas
-comentarios = db.comentarios
+entradas = db.entradas
+wikis = db.wikis
 
-#Cuando entramos a /entradas accederemos aqui
-
-# MicroServicio de VERSIONES
-
-# get entradas. ?titulo=<entrada> para filtrar por similitud en nombre (cRud)
-@version_bp.route("/", methods = ['GET'])
-def get_entry():
+# GET /entradas
+@version_bp.route("/", methods=['GET'])
+def get_entries():
     nombre = request.args.get("nombre")
     idWiki = request.args.get("idWiki")
     query = {}
 
     if nombre:
-        query["nombre"]={"$regex":nombre}
+        query["nombre"] = {"$regex": nombre, "$options": "i"}
     if idWiki:
-        query["idWiki"]=ObjectId(idWiki)
+        query["idWiki"] = ObjectId(idWiki)
 
-    print(query)
-
-    if query:
-        print("busqueda parametrizada")
-        entradas = coleccion.find(query)
-    else:
-        print("busqueda normal")
-        entradas = coleccion.find()
-
-    entradas_json = json.loads(json_util.dumps(entradas))
+    entradas_data = entradas.find(query)
+    entradas_json = json.loads(json_util.dumps(entradas_data))
     return jsonify(entradas_json)
 
-# actualiza entradas buscando coincidencias por nombreEntrada (crUd)
-@version_bp.route("/<nombreEntrada>", methods = ['PUT'])
-def update_entry(nombreEntrada):
-    datos = request.json # recoge los datos del body
-
-    filtro = {"nombreEntrada": nombreEntrada}
-    actualizacion = {"$set": datos}
-    coleccion.update_one(filtro, actualizacion)
-
-    return f"<p>La entrada con nombreEntrada {nombreEntrada} se ha actualizado correctamente</p>"
-
-# DELETE, es decir (cruD), se usa con el envio de un json y busca en la base de datos de entradas para borrarlo, en caso de existir lo borra, en su defecto devuelve un error
-@version_bp.route("/", methods = ['DELETE'])
-def delete_entry():
-    datos = request.json
-    resultado = coleccion.find_one_and_delete(datos)
-    if resultado:
-        return f"<p>La entrada con nombreEntrada {datos['nombreEntrada']} se ha eliminado correctamente</p>"
+# GET /entradas/<id>
+@version_bp.route("/<id>", methods=['GET'])
+def get_entry_by_id(id):
+    entrada = entradas.find_one({"_id": ObjectId(id)})
+    if entrada:
+        return jsonify(json.loads(json_util.dumps(entrada)))
     else:
-        return f"<p>La entrada con nombreEntrada {datos['nombreEntrada']} no se ha encontrado</p>"
+        return jsonify({"error": "Entrada no encontrada"}), 404
 
-# POST, es decir (Crud), se usa con el envio de un json y controla que no sea nulo o vacio y
-@version_bp.route("/", methods = ['POST'])
+# POST /entradas
+@version_bp.route("/", methods=['POST'])
 def create_entry():
     datos = request.json
     if not datos:
-        return "<p>Error al insertar una nueva entrada. Los valores no son válidos</p>"
+        return jsonify({"error": "Datos no válidos"}), 400
 
-    nombre = datos["nombre"]
+    nombre = datos.get("nombre")
+    if not nombre:
+        return jsonify({"error": "El nombre es obligatorio"}), 400
+
+    try:
+        datos["idVersionActual"] = ObjectId(datos["idVersionActual"])
+        datos["idWiki"] = ObjectId(datos["idWiki"])
+    except Exception as e:
+        return jsonify({"error": f"Error al convertir los ID: {str(e)}"}), 400
+
     datos["slug"] = nombre.lower().replace(" ", "-")
 
-    #Manejo de nulos
-    if nombre == None:
-        return f"<p>La entrada no es valida</p>"
+    if entradas.find_one({"nombre": nombre}):
+        return jsonify({"error": f"Ya existe una entrada con el nombre {nombre}"}), 400
 
-    if nombre: #Si existe una entrada con nombreEntrada => t buscamos parametrizadamente, si es null devolvemos todos y si no existe pues error
-        entrada = coleccion.find_one({"nombre": nombre})
+    entradas.insert_one(datos)
+    return jsonify({"message": f"Entrada '{nombre}' creada correctamente"}), 201
 
-        if not entrada:
-            coleccion.insert_one(datos)
-            return f"<p>La entrada con nombreEntrada {datos['nombreEntrada']} se ha creado correctamente</p>"
-        else:
-            return f"<p>La entrada con nombreEntrada {datos['nombreEntrada']} ya existe</p>"
+# PUT /entradas/<id>
+@version_bp.route("/<id>", methods=['PUT'])
+def update_entry(id):
+    datos = request.json
+    if not datos:
+        return jsonify({"error": "Datos no válidos"}), 400
+
+    filtro = {"_id": ObjectId(id)}
+    entrada_existente = entradas.find_one(filtro)
+    if not entrada_existente:
+        return jsonify({"error": "Entrada no encontrada"}), 404
+
+    entradas.update_one(filtro, {"$set": datos})
+    return jsonify({"message": f"Entrada con ID {id} actualizada correctamente"}), 200
+
+# DELETE /entradas/<id>
+@version_bp.route("/<id>", methods=['DELETE'])
+def delete_entry(id):
+    filtro = {"_id": ObjectId(id)}
+    entrada = entradas.find_one(filtro)
+    if entrada:
+        entradas.delete_one(filtro)
+        return jsonify({"message": f"Entrada con ID {id} eliminada correctamente"}), 200
+    else:
+        return jsonify({"error": "Entrada no encontrada"}), 404
+
+# GET /entradas?nombre&idWiki
+@version_bp.route("/", methods=['GET'])
+def get_entries_by_name_and_idwiki():
+    nombre = request.args.get("nombre")
+    idWiki = request.args.get("idWiki")
+    query = {}
+
+    if nombre:
+        query["nombre"] = {"$regex": nombre, "$options": "i"}
+    if idWiki:
+        query["idWiki"] = ObjectId(idWiki)
+
+    entradas_data = entradas.find(query)
+    entradas_json = json.loads(json_util.dumps(entradas_data))
+    return jsonify(entradas_json)
+
+# GET /entradas/<id>/wikis
+@version_bp.route("/<id>/wikis", methods=['GET'])
+def get_wikis_for_entry(id):
+    entrada = entradas.find_one({"_id": ObjectId(id)})
+    if entrada:
+        wikis_ids = entrada.get("wikis", [])
+        wikis_data = wikis.find({"_id": {"$in": wikis_ids}})
+        wikis_json = json.loads(json_util.dumps(wikis_data))
+        return jsonify(wikis_json)
+    else:
+        return jsonify({"error": "Entrada no encontrada"}), 404

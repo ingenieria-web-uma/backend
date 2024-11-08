@@ -8,17 +8,6 @@ x-service-base: &service-base
     - red
 
 services:
-  gateway:
-    <<: *service-base
-    build:
-      args:
-        COPY_REQUIREMENTS: "false"
-        SERVICE_PATH: .
-        SERVICE_PORT: ${SERVICE_GATEWAY_PORT}
-    container_name: gateway
-    ports:
-      - ${SERVICE_GATEWAY_PORT}:${SERVICE_GATEWAY_PORT}
-
   wikis:
     <<: *service-base
     build:

@@ -15,8 +15,7 @@ RUN adduser \
     --uid "${UID}" \
     appuser
 
-ARG COPY_REQUIREMENTS=false
-COPY ${COPY_REQUIREMENTS:+../../requirements.txt} .
+COPY ../../requirements.txt .
 
 RUN --mount=type=cache,target=/root/.cache/pip \
     --mount=type=bind,source=requirements.txt,target=requirements.txt \

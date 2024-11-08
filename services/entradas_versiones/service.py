@@ -1,10 +1,11 @@
 import json
 import os
+import requests
 
 import pymongo
 from bson import json_util
 from dotenv import load_dotenv
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, current_app
 from bson.objectid import ObjectId
 
 load_dotenv()
@@ -115,9 +116,17 @@ def get_entries_by_name_and_idwiki():
 def get_wikis_for_entry(id):
     entrada = entradas.find_one({"_id": ObjectId(id)})
     if entrada:
-        wikis_ids = entrada.get("wikis", [])
-        wikis_data = wikis.find({"_id": {"$in": wikis_ids}})
-        wikis_json = json.loads(json_util.dumps(wikis_data))
-        return jsonify(wikis_json)
+        wiki_id = entrada["idWiki"]
+        wikiServiceName = os.getenv("ENDPOINT_WIKIS")
+        wikiServicePort = os.getenv("SERVICE_WIKIS_PORT")
+        if current_app.debug:
+            wiki_raw = requests.get(f"http://localhost:{wikiServicePort}/wikis/{wiki_id}") # solo dev
+        else:
+            wiki_raw = requests.get(f"http://{wikiServiceName}:{wikiServicePort}/wikis/{wiki_id}")
+
+        if wiki_raw.status_code is 200:
+            return jsonify(wiki_raw.json())
+        else:
+            return {"error":"Error al obtener la wiki de la entrada", "status_code":400}
     else:
         return jsonify({"error": "Entrada no encontrada"}), 404

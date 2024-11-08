@@ -5,6 +5,7 @@ import pymongo
 from bson import json_util
 from dotenv import load_dotenv
 from flask import Blueprint, jsonify, request
+from bson.objectid import ObjectId
 
 load_dotenv()
 MONGO_URL = os.getenv("MONGO_URL")
@@ -24,12 +25,20 @@ comentarios = db.comentarios
 # get entradas. ?titulo=<entrada> para filtrar por similitud en nombre (cRud)
 @version_bp.route("/", methods = ['GET'])
 def get_entry():
-    titulo = request.args.get("titulo")
-    print(titulo)
+    nombre = request.args.get("nombre")
+    idWiki = request.args.get("idWiki")
+    query = {}
 
-    if titulo:
+    if nombre:
+        query["nombre"]={"$regex":nombre}
+    if idWiki:
+        query["idWiki"]=ObjectId(idWiki)
+
+    print(query)
+
+    if query:
         print("busqueda parametrizada")
-        entradas = coleccion.find({"nombreEntrada":{"$regex": titulo}})
+        entradas = coleccion.find(query)
     else:
         print("busqueda normal")
         entradas = coleccion.find()

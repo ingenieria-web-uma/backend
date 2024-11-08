@@ -5,6 +5,7 @@ from bson.objectid import ObjectId
 import os
 from flask import Blueprint, jsonify, request
 import json
+import requests
 
 load_dotenv()
 MONGO_URL = os.getenv("MONGO_URL")
@@ -98,11 +99,12 @@ def delete_wiki(id):
 
 @wikis_bp.route("/<id>/entradas", methods=['GET'])
 def get_entradas_byWiki(id):
-    resultado = wikis.find_one({"_id":ObjectId(id)})
-    if resultado:
-        print("Busqueda de wiki por entradas")
-        resultado_json = json.loads(json_util.dumps(resultado))
-        return jsonify(resultado_json)
+    nombreServicio= os.getenv("ENDPOINT_ENTRADAS")
+    puertoServicio= os.getenv("SERVICE_ENTRADAS_PORT")
+    url = f"http://{nombreServicio}:{puertoServicio}/entradas/?idWiki={id}"
+    url = f"http://localhost:{puertoServicio}/entradas/?idWiki={id}" #borrar cuando se use docker
+    resultado = requests.get(url)
+    if resultado.status_code != 200:
+        return {"error":"No se ha podido solicitar las entradas de la wiki", "status_code":404}
     else:
-        print(f"Error al obtener las entradas de la wiki con id {id}")
-        return {"error": "Entradas con id de la wiki especificado no encontrada", "status_code":404}
+        return jsonify(resultado.json())

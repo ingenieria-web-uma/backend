@@ -2,9 +2,27 @@ services:
   entradas-versiones:
     build:
       context: .
-      dockerfile: services/entradas-versiones/Dockerfile
-    container_name: entradas_versiones_service
+      dockerfile: services/entradas_versiones/Dockerfile
+    container_name: entradas_versiones
     env_file:
       - .env
+    networks:
+      - red
     ports:
       - 5001:5000
+
+  comentarios-valoraciones:
+    build:
+      context: .
+      dockerfile: services/comentarios_valoraciones/Dockerfile
+    container_name: comentarios_valoraciones
+    env_file:
+      - .env
+    networks:
+      - red
+    ports:
+      - 5002:5000
+
+networks:
+  red:
+    driver: bridge

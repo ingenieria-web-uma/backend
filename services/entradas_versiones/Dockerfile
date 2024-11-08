@@ -22,7 +22,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 
 USER appuser
 
-COPY services/entradas-versiones .
+COPY services/entradas_versiones .
 
 EXPOSE 5000
 

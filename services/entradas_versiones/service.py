@@ -1,12 +1,12 @@
 import json
 import os
-import requests
 
 import pymongo
+import requests
 from bson import json_util
-from dotenv import load_dotenv
-from flask import Blueprint, jsonify, request, current_app
 from bson.objectid import ObjectId
+from dotenv import load_dotenv
+from flask import Blueprint, current_app, jsonify, request
 
 load_dotenv()
 MONGO_URL = os.getenv("MONGO_URL")
@@ -99,12 +99,23 @@ def delete_entry(id):
 @version_bp.route("/", methods=['DELETE'])
 def delete_entries_byWikiId():
     body = request.json
+    if not body:
+        return {"error": "Datos no válidos"}, 400
+
+    if "idWiki" not in body:
+        return {"error": "El campo idWiki es obligatorio"}, 400
+
+    if not ObjectId.is_valid(body["idWiki"]):
+        return {"error": "El campo idWiki no es un ObjectId válido"}, 400
+    
     idWiki = body["idWiki"]
-    if idWiki:
-        result = entradas.delete_many({"idWiki":ObjectId(idWiki)})
-        return {f"Se han borrado {result.deleted_count} entradas relacionadas con la wiki"}, 200
+
+    result = entradas.delete_many({"idWiki":ObjectId(idWiki)})
+    if result.deleted_count == 0:
+        return {"message": "No se encontraron entradas asociadas a la wiki"}, 200
     else:
-        return {"error":f"Error al eliminar las entradas asociadas a la wiki {idWiki}","status_code":400}
+        return {"message": f"Se han eliminado {result.deleted_count} entradas asociadas a la wiki con ID {idWiki}"}, 200
+
 
 # GET /entradas?nombre&idWiki
 @version_bp.route("/", methods=['GET'])

@@ -1,7 +1,7 @@
-from flask import Flask
-from dotenv import load_dotenv
 import os
 
+from dotenv import load_dotenv
+from flask import Flask
 from service import version_bp
 
 load_dotenv()
@@ -17,4 +17,4 @@ def main_route():
 
 # Ejecutar la aplicación Flask
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", debug=True, port=os.getenv("SERVICE_ENTRADAS_PORT"))
+    app.run(host="0.0.0.0", port=os.getenv("SERVICE_ENTRADAS_PORT"))

@@ -1,11 +1,12 @@
-from dotenv import load_dotenv
+import json
+import os
+
 import pymongo
 import requests
 from bson import json_util
 from bson.objectid import ObjectId
-import os
-from flask import Blueprint, jsonify, request,current_app
-import json
+from dotenv import load_dotenv
+from flask import Blueprint, current_app, jsonify, request
 
 load_dotenv()
 MONGO_URL = os.getenv("MONGO_URL")
@@ -83,16 +84,29 @@ def update_wiki(id):
 def delete_wiki(id):
 
     wiki = wikis.find_one({"_id":ObjectId(id)})
+    print(wiki)
     nombre = wiki["nombre"]
 
     if not wiki:
-        return f"La wiki con nombre {nombre} no existe, por lo tanto no se puede borrar"
+        return f"La wiki con nombre {nombre} no existe, por lo tanto no se puede borrar", 404
     else:
+        #borrar entradas de la wiki
+        headers = {"Content-Type":"application/json"}
+        if current_app.debug:
+            response = requests.delete(f"http://localhost:{os.getenv("SERVICE_ENTRADAS_PORT")}/entradas",headers=headers, json={"idWiki":id})
+        else:
+            response = requests.delete(f"http://{os.getenv("ENDPOINT_ENTRADAS")}:{os.getenv("SERVICE_ENTRADAS_PORT")}/entradas", headers=headers,json={"idWiki":id})
+
+        print(response.status_code)
+
+        if response.status_code != 200:
+            return "Error al eliminar las entradas relacionadas a la wiki", 400
+
         borrado = wikis.delete_one(wiki)
         if borrado == None:
-            return "Borrado fallido"
+            return "La wiki no se ha podido borrar", 400
         else:
-            return "Borrado exitoso"
+            return "La wiki ha sido borrada con éxito", 200
 
 
 #GET /wikis/<id>/entradas

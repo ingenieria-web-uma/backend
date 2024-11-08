@@ -1,4 +1,16 @@
 services:
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gateway
+    env_file:
+      - .env
+    networks:
+      - red
+    ports:
+      - 80:80
+
   wikis:
     build:
       context: .

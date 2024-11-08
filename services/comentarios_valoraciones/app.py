@@ -1,7 +1,6 @@
 from flask import Flask
-from flask_swagger_ui import get_swaggerui_blueprint
-import os
 from dotenv import load_dotenv
+import os
 
 from service import comentario_bp
 
@@ -9,20 +8,7 @@ load_dotenv()
 
 app = Flask(__name__)
 
-SWAGGER_URL = '/docs'
-API_URL = '/static/swagger.yaml'
-
-swaggerui_bp = get_swaggerui_blueprint(
-    SWAGGER_URL,
-    API_URL,
-    config = {
-        'app_name': "laWiki",
-        'layout': "BaseLayout"
-    }
-)
-
 # Registrar los microservicios como Blueprints
-app.register_blueprint(swaggerui_bp)
 app.register_blueprint(comentario_bp, url_prefix="/comentarios")
 
 @app.route("/")

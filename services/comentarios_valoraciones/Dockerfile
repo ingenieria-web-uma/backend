@@ -24,6 +24,6 @@ USER appuser
 
 COPY services/comentarios_valoraciones .
 
-EXPOSE 5000
+EXPOSE 5002
 
 CMD ["python", "app.py"]

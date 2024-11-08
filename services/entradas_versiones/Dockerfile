@@ -24,6 +24,6 @@ USER appuser
 
 COPY services/entradas_versiones .
 
-EXPOSE 5000
+EXPOSE 5001
 
 CMD ["python", "app.py"]

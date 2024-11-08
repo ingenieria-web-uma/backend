@@ -1,9 +1,10 @@
 from dotenv import load_dotenv
 import pymongo
+import requests
 from bson import json_util
 from bson.objectid import ObjectId
 import os
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request,current_app
 import json
 
 load_dotenv()
@@ -100,8 +101,10 @@ def delete_wiki(id):
 def get_entradas_byWiki(id):
     nombreServicio= os.getenv("ENDPOINT_ENTRADAS")
     puertoServicio= os.getenv("SERVICE_ENTRADAS_PORT")
-    url = f"http://{nombreServicio}:{puertoServicio}/entradas/?idWiki={id}"
-    url = f"http://localhost:{puertoServicio}/entradas/?idWiki={id}" #borrar cuando se use docker
+    if current_app.debug:
+        url = f"http://localhost:{puertoServicio}/entradas/?idWiki={id}" #borrar cuando se use docker
+    else:
+        url = f"http://{nombreServicio}:{puertoServicio}/entradas/?idWiki={id}"
     resultado = requests.get(url)
     if resultado.status_code != 200:
         return {"error":"No se ha podido solicitar las entradas de la wiki", "status_code":404}

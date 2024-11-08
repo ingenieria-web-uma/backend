@@ -1,7 +1,11 @@
 from flask import Flask
 from flask_swagger_ui import get_swaggerui_blueprint
+import os
+from dotenv import load_dotenv
 
 from service import comentario_bp
+
+load_dotenv()
 
 app = Flask(__name__)
 
@@ -27,4 +31,4 @@ def main_route():
 
 # Ejecutar la aplicación Flask
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", debug=True)
+    app.run(host="0.0.0.0", debug=True, port=os.getenv("SERVICE_COMENTARIOS_PORT"))

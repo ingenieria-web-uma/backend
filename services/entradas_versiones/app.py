@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_swagger_ui import get_swaggerui_blueprint
 
-from version_service import version_bp
+from service import version_bp
 
 app = Flask(__name__)
 

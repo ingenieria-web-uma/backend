@@ -17,4 +17,4 @@ def main_route():
 
 # Ejecutar la aplicación Flask
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", debug=True, port=os.getenv("SERVICE_WIKIS_PORT"))
+    app.run(host="0.0.0.0", port=os.getenv("SERVICE_WIKIS_PORT"))

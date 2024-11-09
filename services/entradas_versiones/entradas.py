@@ -11,41 +11,43 @@ from flask import Blueprint, current_app, jsonify, request
 load_dotenv()
 MONGO_URL = os.getenv("MONGO_URL")
 
-version_bp = Blueprint('version_bp', __name__)
+entradas_bp = Blueprint('entradas_bp', __name__)
 
 # Configuración de MongoDB
 client = pymongo.MongoClient(MONGO_URL)
 db = client.laWiki
 entradas = db.entradas
-wikis = db.wikis
 
 # GET /entradas
-@version_bp.route("/", methods=['GET'])
+@entradas_bp.route("/", methods=['GET'])
 def get_entries():
-    nombre = request.args.get("nombre")
-    idWiki = request.args.get("idWiki")
-    query = {}
-
+    try:
+        nombre = request.args.get("nombre")
+        idWiki = request.args.get("idWiki")
+        query = {}
+    except Exception as e:
+        return jsonify({"error": "Error al leer parámetros de consulta"}), 400
     if nombre:
         query["nombre"] = {"$regex": nombre, "$options": "i"}
     if idWiki:
         query["idWiki"] = ObjectId(idWiki)
+    
 
     entradas_data = entradas.find(query)
     entradas_json = json.loads(json_util.dumps(entradas_data))
     return jsonify(entradas_json)
 
 # GET /entradas/<id>
-@version_bp.route("/<id>", methods=['GET'])
+@entradas_bp.route("/<id>", methods=['GET'])
 def get_entry_by_id(id):
     entrada = entradas.find_one({"_id": ObjectId(id)})
     if entrada:
-        return jsonify(json.loads(json_util.dumps(entrada)))
+        return jsonify(json.loads(json_util.dumps(entrada))), 200
     else:
         return jsonify({"error": "Entrada no encontrada"}), 404
 
 # POST /entradas
-@version_bp.route("/", methods=['POST'])
+@entradas_bp.route("/", methods=['POST'])
 def create_entry():
     datos = request.json
     if not datos:
@@ -70,7 +72,7 @@ def create_entry():
     return jsonify({"message": f"Entrada '{nombre}' creada correctamente"}), 201
 
 # PUT /entradas/<id>
-@version_bp.route("/<id>", methods=['PUT'])
+@entradas_bp.route("/<id>", methods=['PUT'])
 def update_entry(id):
     datos = request.json
     if not datos:
@@ -85,7 +87,7 @@ def update_entry(id):
     return jsonify({"message": f"Entrada con ID {id} actualizada correctamente"}), 200
 
 # DELETE /entradas/<id>
-@version_bp.route("/<id>", methods=['DELETE'])
+@entradas_bp.route("/<id>", methods=['DELETE'])
 def delete_entry(id):
     filtro = {"_id": ObjectId(id)}
     entrada = entradas.find_one(filtro)
@@ -96,29 +98,41 @@ def delete_entry(id):
         return jsonify({"error": "Entrada no encontrada"}), 404
 
 # DELETE /entradas/ : JSON {idWiki:"xxxxxxxxx"} Borra las entradas asociadas a una wiki
-@version_bp.route("/", methods=['DELETE'])
+@entradas_bp.route("/", methods=['DELETE'])
 def delete_entries_byWikiId():
     body = request.json
     if not body:
-        return {"error": "Datos no válidos"}, 400
-
-    if "idWiki" not in body:
-        return {"error": "El campo idWiki es obligatorio"}, 400
-
-    if not ObjectId.is_valid(body["idWiki"]):
-        return {"error": "El campo idWiki no es un ObjectId válido"}, 400
+        return jsonify({"error": "Datos no válidos"}), 400
     
-    idWiki = body["idWiki"]
+    try:
+        idWiki = body["idWiki"]
+    except Exception as e:
+        return jsonify({"error": f"Error al convertir el ID: {str(e)}"}), 400
 
-    result = entradas.delete_many({"idWiki":ObjectId(idWiki)})
-    if result.deleted_count == 0:
-        return {"message": "No se encontraron entradas asociadas a la wiki"}, 200
-    else:
-        return {"message": f"Se han eliminado {result.deleted_count} entradas asociadas a la wiki con ID {idWiki}"}, 200
+    idEntradasABorrar = []
+    try:
+        for entradaByWiki in entradas.find({"idWiki": ObjectId(idWiki)}):
+            idE = json.loads(json_util.dumps(entradaByWiki))["_id"]["$oid"]
+            idEntradasABorrar.append(idE)
+        print(idEntradasABorrar)
+
+        if len(idEntradasABorrar) > 0:
+            with current_app.test_client() as client:
+                for idEntrada in idEntradasABorrar:
+                    # client.delete("/versiones", json={"idEntrada": idEntrada})
+                    if current_app.debug:
+                        requests.delete(f"http://localhost:{os.getenv("SERVICE_ENTRADAS_PORT")}/versiones",json={"idEntrada": idEntrada})
+                    else:
+                        requests.delete(f"http://{os.getenv("ENDPOINT_ENTRADAS")}:{os.getenv("SERVICE_ENTRADAS_PORT")}/versiones",json={"idEntrada": idEntrada})
+                    client.delete(f"/entradas/{idEntrada}")
+    except Exception as e:
+        return jsonify({"error": f"Error al buscar las entradas: {str(e)}"}), 400
+
+    return jsonify({"message": f"Se han eliminado las entradas y versiones asociadas a la wiki con ID {idWiki}"}), 200
 
 
 # GET /entradas?nombre&idWiki
-@version_bp.route("/", methods=['GET'])
+@entradas_bp.route("/", methods=['GET'])
 def get_entries_by_name_and_idwiki():
     nombre = request.args.get("nombre")
     idWiki = request.args.get("idWiki")
@@ -131,10 +145,10 @@ def get_entries_by_name_and_idwiki():
 
     entradas_data = entradas.find(query)
     entradas_json = json.loads(json_util.dumps(entradas_data))
-    return jsonify(entradas_json)
+    return jsonify(entradas_json), 200
 
 # GET /entradas/<id>/wikis
-@version_bp.route("/<id>/wikis", methods=['GET'])
+@entradas_bp.route("/<id>/wikis", methods=['GET'])
 def get_wikis_for_entry(id):
     entrada = entradas.find_one({"_id": ObjectId(id)})
     if entrada:
@@ -149,6 +163,6 @@ def get_wikis_for_entry(id):
         if wiki_raw.status_code == 200:
             return jsonify(wiki_raw.json()),200
         else:
-            return {"error":"Error al obtener la wiki de la entrada", "status_code":400}
+            return {"error":"Error al obtener la wiki de la entrada", "status_code":400}, 400
     else:
         return jsonify({"error": "Entrada no encontrada"}), 404

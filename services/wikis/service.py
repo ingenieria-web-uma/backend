@@ -62,7 +62,7 @@ def create_wiki():
         return {"error": f"Wiki con nombre {nombre} ya existe", "status_code": 404}
     else:
         wikis.insert_one(datos)
-        return f"<p>La wiki con el nombre {nombre} ha sido creada correctamente </p>"
+        return jsonify({"response": f"Wiki {nombre} creada correctamente"}), 201
 
 #PUT /wikis/<id>
 

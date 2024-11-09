@@ -166,3 +166,26 @@ def get_wikis_for_entry(id):
             return {"error":"Error al obtener la wiki de la entrada", "status_code":400}, 400
     else:
         return jsonify({"error": "Entrada no encontrada"}), 404
+    
+# GET /entradas/<id>/comentarios
+@version_bp.route("/<id>/comentarios", methods=['GET'])
+def get_comentarios_for_entry(id):
+    entrada = entradas.find_one({"_id": ObjectId(id)})
+    if entrada:
+        slug = entrada["slug"]
+        # buscar todos los comentarios de la entrada
+        comentariosServiceName = os.getenv("ENDPOINT_COMENTARIOS")
+        comentariosPort = os.getenv("SERVICE_COMENTARIOS_PORT")
+        
+        if current_app.debug:
+            url = f"http://localhost:{comentariosPort}/{slug}/comments"
+        else:
+            url = f"http://{comentariosServiceName}:{comentariosPort}/{slug}/comments"
+
+        comentarios_raw = requests.get(url)
+        if comentarios_raw.status_code == 200:
+            return jsonify(comentarios_raw.json()),200
+        else:
+            return {"error":"Error al obtener los comentarios de la entrada", "status_code":400}
+    else:
+        return jsonify({"error": "Entrada no encontrada"}), 404

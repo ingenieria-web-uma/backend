@@ -20,24 +20,33 @@ wikis = db.wikis
 
 @wikis_bp.route("/", methods = ['GET'])
 def get_wikis():
-    nombre = request.args.get("nombre")
-
-    if nombre: #Si tenemos idWiki buscamos parametrizadamente
-        print("Busqueda parametrizada con idWiki")
-        wiki = wikis.find({"nombre":{"$regex": nombre}})
-    else:
-        print("Busqueda general")
-        wiki = wikis.find()
-
-    wiki_json = json.loads(json_util.dumps(wiki))
-
-    return jsonify(wiki_json)
+    try:
+        nombre = request.args.get("nombre")
+    except Exception as e:
+        return jsonify({"error": "Error al leer parámetros de consulta"}),400        
+    try:
+        if nombre: #Si tenemos idWiki buscamos parametrizadamente
+            print("Busqueda parametrizada con idWiki")
+            wiki = wikis.find({"nombre":{"$regex": nombre}})
+        else:
+            print("Busqueda general")
+            wiki = wikis.find()
+    except Exception as e:
+        return jsonify({"error": "Error al consultar la base de datos"}), 404
+    try:
+        wiki_json = json.loads(json_util.dumps(wiki))
+        return jsonify(wiki_json)
+    except Exception as e:
+        return jsonify({"error": "Error al procesar resultados"}), 400
 
 #GET /wikis/<id>
 
 @wikis_bp.route("/<id>", methods = ["GET"])
 def get_wikis_byId(id):
-    resultado = wikis.find_one({"_id":ObjectId(id)})
+    try:
+        resultado = wikis.find_one({"_id":ObjectId(id)})
+    except Exception as e:
+        return jsonify({"error": "ID inválido"}), 400
     if resultado:
         print("Busqueda de wiki por id")
         resultado_json = json.loads(json_util.dumps(resultado))

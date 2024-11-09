@@ -26,7 +26,7 @@ def view_comments(slug):
     nombre = slug
     entrada = coleccion.find_one({"slug": nombre})
     if not entrada:
-        return jsonify({"error": "Entrada no encontrada"}), 400 //cambiar cuando sepamos el formato que vamos a usar
+        return jsonify({"error": "Entrada no encontrada"}), 400 #cambiar cuando sepamos el formato que vamos a usar
     idEntrada = entrada["_id"]
     comentarios_slug = comentarios.find({"idEntrada" : idEntrada})
     comentarios_json = json.loads(json_util.dumps(comentarios_slug))

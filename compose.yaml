@@ -4,8 +4,6 @@ x-service-base: &service-base
     dockerfile: Dockerfile
   env_file:
     - .env
-  networks:
-    - red
 
 services:
   wikis:
@@ -37,7 +35,3 @@ services:
     container_name: comentarios_valoraciones
     ports:
       - ${SERVICE_COMENTARIOS_PORT}:${SERVICE_COMENTARIOS_PORT}
-
-networks:
-  red:
-    driver: bridge

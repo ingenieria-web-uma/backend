@@ -31,7 +31,7 @@ def get_entries():
         query["nombre"] = {"$regex": nombre, "$options": "i"}
     if idWiki:
         query["idWiki"] = ObjectId(idWiki)
-    
+
 
     entradas_data = entradas.find(query)
     entradas_json = json.loads(json_util.dumps(entradas_data))
@@ -103,7 +103,7 @@ def delete_entries_byWikiId():
     body = request.json
     if not body:
         return jsonify({"error": "Datos no válidos"}), 400
-    
+
     try:
         idWiki = body["idWiki"]
     except Exception as e:
@@ -166,9 +166,9 @@ def get_wikis_for_entry(id):
             return {"error":"Error al obtener la wiki de la entrada", "status_code":400}, 400
     else:
         return jsonify({"error": "Entrada no encontrada"}), 404
-    
+
 # GET /entradas/<id>/comentarios
-@version_bp.route("/<id>/comentarios", methods=['GET'])
+@entradas_bp.route("/<id>/comentarios", methods=['GET'])
 def get_comentarios_for_entry(id):
     entrada = entradas.find_one({"_id": ObjectId(id)})
     if entrada:
@@ -176,7 +176,7 @@ def get_comentarios_for_entry(id):
         # buscar todos los comentarios de la entrada
         comentariosServiceName = os.getenv("ENDPOINT_COMENTARIOS")
         comentariosPort = os.getenv("SERVICE_COMENTARIOS_PORT")
-        
+
         if current_app.debug:
             url = f"http://localhost:{comentariosPort}/{slug}/comments"
         else:

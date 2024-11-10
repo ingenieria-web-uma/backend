@@ -23,17 +23,23 @@ comentarios = db.comentarios
 # GET /comentarios
 @comentario_bp.route("/", methods = ['GET'])
 def view_comments():
-    idUsuario = request.args.get("idUsuarioRedactor")
-    idEntrada = request.args.get("idEntrada")
-    contenido = request.args.get("contenido")
-    query = {}
+    try:
+        idUsuario = request.args.get("idUsuarioRedactor")
+        idEntrada = request.args.get("idEntrada")
+        contenido = request.args.get("contenido")
+        editado = request.args.get("editado")
+        query = {}
+    except Exception as e:
+        return jsonify({"error": "Error al leer parámetros de consulta"}), 400
 
     if idUsuario:
-        query["idUsuarioRedactor"] = {"$regex": idUsuario, "$options": "i"}
+        query["idUsuarioRedactor"] = ObjectId(idUsuario)
     if idEntrada:
         query["idEntrada"] = ObjectId(idEntrada)
     if contenido:
-        query["contenido"] = ObjectId(contenido)
+        query["contenido"] = {"$regex": contenido, "$options": "i"}
+    if editado is not None:
+        query["editado"] = editado.lower() == "true"
 
     comentarios_data = comentarios.find(query)
     comentarios_json = json.loads(json_util.dumps(comentarios_data))

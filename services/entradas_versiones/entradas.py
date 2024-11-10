@@ -27,75 +27,97 @@ def get_entries():
         query = {}
     except Exception as e:
         return jsonify({"error": "Error al leer parámetros de consulta"}), 400
-    if nombre:
-        query["nombre"] = {"$regex": nombre, "$options": "i"}
-    if idWiki:
-        query["idWiki"] = ObjectId(idWiki)
 
+    try:
+        if nombre:
+            query["nombre"] = {"$regex": nombre, "$options": "i"}
+        if idWiki:
+            query["idWiki"] = ObjectId(idWiki)
+    except Exception as e:
+        return jsonify({"error": f"Error al convertir los ID: {str(e)}"}), 400
 
-    entradas_data = entradas.find(query)
-    entradas_json = json.loads(json_util.dumps(entradas_data))
-    return jsonify(entradas_json)
+    try:
+        entradas_data = entradas.find(query)
+        entradas_json = json.loads(json_util.dumps(entradas_data))
+        return jsonify(entradas_json), 200
+    except Exception as e:
+        return jsonify({"error": f"Error al buscar las entradas: {str(e)}"}), 400
 
 # GET /entradas/<id>
 @entradas_bp.route("/<id>", methods=['GET'])
 def get_entry_by_id(id):
-    entrada = entradas.find_one({"_id": ObjectId(id)})
-    if entrada:
-        return jsonify(json.loads(json_util.dumps(entrada))), 200
-    else:
-        return jsonify({"error": "Entrada no encontrada"}), 404
+    try:
+        entrada = entradas.find_one({"_id": ObjectId(id)})
+        if entrada:
+            return jsonify(json.loads(json_util.dumps(entrada))), 200
+        else:
+            return jsonify({"error": "Entrada no encontrada"}), 404
+    except Exception as e:
+        return jsonify({"error": f"Error al buscar la entrada: {str(e)}"}), 400
 
 # POST /entradas
 @entradas_bp.route("/", methods=['POST'])
 def create_entry():
-    datos = request.json
+    try:
+        datos = request.json
+    except Exception as e:
+        return jsonify({"error": "Error al leer los datos"}), 400
     if not datos:
         return jsonify({"error": "Datos no válidos"}), 400
 
-    nombre = datos.get("nombre")
-    if not nombre:
-        return jsonify({"error": "El nombre es obligatorio"}), 400
 
     try:
         datos["idVersionActual"] = ObjectId(datos["idVersionActual"])
         datos["idWiki"] = ObjectId(datos["idWiki"])
+        nombre = datos.get("nombre")
+        if not nombre:
+            return jsonify({"error": "El nombre es obligatorio"}), 400
+
+        datos["slug"] = nombre.lower().replace(" ", "-")
     except Exception as e:
         return jsonify({"error": f"Error al convertir los ID: {str(e)}"}), 400
 
-    datos["slug"] = nombre.lower().replace(" ", "-")
-
-    if entradas.find_one({"nombre": nombre}):
-        return jsonify({"error": f"Ya existe una entrada con el nombre {nombre}"}), 400
-
-    entradas.insert_one(datos)
-    return jsonify({"message": f"Entrada '{nombre}' creada correctamente"}), 201
+    try:
+        if entradas.find_one({"nombre": nombre}):
+            return jsonify({"error": f"Ya existe una entrada con el nombre {nombre}"}), 400
+        entradas.insert_one(datos)
+        return jsonify({"message": f"Entrada '{nombre}' creada correctamente"}), 201
+    except Exception as e:
+        return jsonify({"error": f"Error al buscar la entrada: {str(e)}"}), 400
 
 # PUT /entradas/<id>
 @entradas_bp.route("/<id>", methods=['PUT'])
 def update_entry(id):
-    datos = request.json
-    if not datos:
-        return jsonify({"error": "Datos no válidos"}), 400
+    try:
+        datos = request.json
+        if not datos:
+            return jsonify({"error": "Datos no válidos"}), 400
 
-    filtro = {"_id": ObjectId(id)}
-    entrada_existente = entradas.find_one(filtro)
-    if not entrada_existente:
-        return jsonify({"error": "Entrada no encontrada"}), 404
+        filtro = {"_id": ObjectId(id)}
+        entrada_existente = entradas.find_one(filtro)
+        if not entrada_existente:
+            return jsonify({"error": "Entrada no encontrada"}), 404
+        if datos.get("nombre"):
+            datos["slug"] = datos["nombre"].lower().replace(" ", "-")
 
-    entradas.update_one(filtro, {"$set": datos})
-    return jsonify({"message": f"Entrada con ID {id} actualizada correctamente"}), 200
+        entradas.update_one(filtro, {"$set": datos})
+        return jsonify({"message": f"Entrada con ID {id} actualizada correctamente"}), 200
+    except Exception as e:
+        return jsonify({"error": f"Error al actualizar la entrada: {str(e)}"}), 400
 
 # DELETE /entradas/<id>
 @entradas_bp.route("/<id>", methods=['DELETE'])
 def delete_entry(id):
-    filtro = {"_id": ObjectId(id)}
-    entrada = entradas.find_one(filtro)
-    if entrada:
-        entradas.delete_one(filtro)
-        return jsonify({"message": f"Entrada con ID {id} eliminada correctamente"}), 200
-    else:
-        return jsonify({"error": "Entrada no encontrada"}), 404
+    try:
+        filtro = {"_id": ObjectId(id)}
+        entrada = entradas.find_one(filtro)
+        if entrada:
+            entradas.delete_one(filtro)
+            return jsonify({"message": f"Entrada con ID {id} eliminada correctamente"}), 200
+        else:
+            return jsonify({"error": "Entrada no encontrada"}), 404
+    except Exception as e:
+        return jsonify({"error": f"Error al eliminar la entrada: {str(e)}"}), 400
 
 # DELETE /entradas/ : JSON {idWiki:"xxxxxxxxx"} Borra las entradas asociadas a una wiki
 @entradas_bp.route("/", methods=['DELETE'])
@@ -131,26 +153,13 @@ def delete_entries_byWikiId():
     return jsonify({"message": f"Se han eliminado las entradas y versiones asociadas a la wiki con ID {idWiki}"}), 200
 
 
-# GET /entradas?nombre&idWiki
-@entradas_bp.route("/", methods=['GET'])
-def get_entries_by_name_and_idwiki():
-    nombre = request.args.get("nombre")
-    idWiki = request.args.get("idWiki")
-    query = {}
-
-    if nombre:
-        query["nombre"] = {"$regex": nombre, "$options": "i"}
-    if idWiki:
-        query["idWiki"] = ObjectId(idWiki)
-
-    entradas_data = entradas.find(query)
-    entradas_json = json.loads(json_util.dumps(entradas_data))
-    return jsonify(entradas_json), 200
-
 # GET /entradas/<id>/wikis
-@entradas_bp.route("/<id>/wikis", methods=['GET'])
+@entradas_bp.route("/<id>/wiki", methods=['GET'])
 def get_wikis_for_entry(id):
-    entrada = entradas.find_one({"_id": ObjectId(id)})
+    try:
+        entrada = entradas.find_one({"_id": ObjectId(id)})
+    except Exception as e:
+        return jsonify({"error": f"Error al buscar la entrada: {str(e)}"}), 400
     if entrada:
         wiki_id = entrada["idWiki"]
         wikiServiceName = os.getenv("ENDPOINT_WIKIS")
@@ -170,22 +179,25 @@ def get_wikis_for_entry(id):
 # GET /entradas/<id>/comentarios
 @entradas_bp.route("/<id>/comentarios", methods=['GET'])
 def get_comentarios_for_entry(id):
-    entrada = entradas.find_one({"_id": ObjectId(id)})
-    if entrada:
-        slug = entrada["slug"]
-        # buscar todos los comentarios de la entrada
-        comentariosServiceName = os.getenv("ENDPOINT_COMENTARIOS")
-        comentariosPort = os.getenv("SERVICE_COMENTARIOS_PORT")
+    try:
+        entrada = entradas.find_one({"_id": ObjectId(id)})
+        if entrada:
+            slug = entrada["slug"]
+            # buscar todos los comentarios de la entrada
+            comentariosServiceName = os.getenv("ENDPOINT_COMENTARIOS")
+            comentariosPort = os.getenv("SERVICE_COMENTARIOS_PORT")
 
-        if current_app.debug:
-            url = f"http://localhost:{comentariosPort}/{slug}/comments"
-        else:
-            url = f"http://{comentariosServiceName}:{comentariosPort}/{slug}/comments"
+            if current_app.debug:
+                url = f"http://localhost:{comentariosPort}/comentarios?idEntrada={id}"
+            else:
+                url = f"http://{comentariosServiceName}:{comentariosPort}/comentarios?idEntrada={id}"
 
-        comentarios_raw = requests.get(url)
-        if comentarios_raw.status_code == 200:
-            return jsonify(comentarios_raw.json()),200
+            comentarios_raw = requests.get(url)
+            if comentarios_raw.status_code == 200:
+                return jsonify(comentarios_raw.json()),200
+            else:
+                return {"error":"Error al obtener los comentarios de la entrada", "status_code":400}
         else:
-            return {"error":"Error al obtener los comentarios de la entrada", "status_code":400}
-    else:
-        return jsonify({"error": "Entrada no encontrada"}), 404
+            return jsonify({"error": "Entrada no encontrada"}), 404
+    except Exception as e:
+        return jsonify({"error": f"Error al buscar la entrada: {str(e)}"}), 400

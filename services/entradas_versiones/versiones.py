@@ -102,8 +102,10 @@ def update_version(id):
         return jsonify({"error": f"Datos no válidos. {e}"}), 400
     if newValues:
         newValues["fechaEdicion"] = datetime.now()
-
-    query = {"_id": ObjectId(id)}
+    try:
+        query = {"_id": ObjectId(id)}
+    except Exception as e:
+        return jsonify({"error": f"Id no valido. {e}"}), 400
     try:
         versiones.update_one(query, {"$set": newValues})
         return jsonify({"message": f"Version con id {id} actualizada correctamente"}), 200
@@ -112,8 +114,17 @@ def update_version(id):
 
 @versiones_bp.route("/<id>", methods=['DELETE'])
 def delete_version(id):
-    query = {"_id": ObjectId(id)}
     try:
+        query = {"_id": ObjectId(id)}
+    except Exception as e:
+        return jsonify({"error": f"Id invalida: {e}"})
+    try:
+        currentEntrada = versiones.find_one(query)
+        idEntrada = currentEntrada["idEntrada"]
+        if current_app.debug:
+            requests.delete(f"http://localhost:{os.getenv("SERVICE_COMENTARIOS_PORT")}/comentarios/{idEntrada}")
+        else:
+            requests.delete(f"http://{os.getenv("ENDPOINT_COMENTARIOS")}:{os.getenv('SERVICE_COMENTARIOS_PORT')}/comentarios/{idEntrada}")
         versiones.find_one_and_delete(query)
         return jsonify({"message": f"Version con id {id} eliminada correctamente"}), 200
     except Exception as e:

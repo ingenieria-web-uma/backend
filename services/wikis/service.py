@@ -92,30 +92,29 @@ def update_wiki(id):
 @wikis_bp.route("/<id>", methods=['DELETE'])
 def delete_wiki(id):
 
-    wiki = wikis.find_one({"_id":ObjectId(id)})
-    print(wiki)
-    nombre = wiki["nombre"]
-
-    if not wiki:
-        return f"La wiki con nombre {nombre} no existe, por lo tanto no se puede borrar", 404
-    else:
+    try:
+        wiki = wikis.find_one({"_id":ObjectId(id)})
+    except Exception as e:
+        return f"La wiki {id} no existe, por lo tanto no se puede borrar", 404
         #borrar entradas de la wiki
-        headers = {"Content-Type":"application/json"}
-        if current_app.debug:
-            response = requests.delete(f"http://localhost:{os.getenv("SERVICE_ENTRADAS_PORT")}/entradas",headers=headers, json={"idWiki":id})
-        else:
-            response = requests.delete(f"http://{os.getenv("ENDPOINT_ENTRADAS")}:{os.getenv("SERVICE_ENTRADAS_PORT")}/entradas", headers=headers,json={"idWiki":id})
+    headers = {"Content-Type":"application/json"}
+    if current_app.debug:
+        response = requests.delete(f"http://localhost:{os.getenv("SERVICE_ENTRADAS_PORT")}/entradas",headers=headers, json={"idWiki":id})
+    else:
+        response = requests.delete(f"http://{os.getenv("ENDPOINT_ENTRADAS")}:{os.getenv("SERVICE_ENTRADAS_PORT")}/entradas", headers=headers,json={"idWiki":id})
 
-        print(response.status_code)
 
-        if response.status_code != 200:
-            return "Error al eliminar las entradas relacionadas a la wiki", 400
+    if response.status_code != 200:
+        return "Error al eliminar las entradas relacionadas a la wiki", 400
 
-        borrado = wikis.delete_one(wiki)
-        if borrado == None:
-            return "La wiki no se ha podido borrar", 400
-        else:
-            return "La wiki ha sido borrada con éxito", 200
+    try:
+        borrado = wikis.delete_one({"_id":ObjectId(id)})
+    except Exception as e:
+        return f"Error al borrar la wiki {id}", 400
+    if borrado.deleted_count == 0:
+        return f"La wiki {id} no existe, por lo tanto no se puede borrar", 200
+
+    return "La wiki ha sido borrada con éxito", 200
 
 
 #GET /wikis/<id>/entradas
@@ -125,7 +124,7 @@ def get_entradas_byWiki(id):
     nombreServicio= os.getenv("ENDPOINT_ENTRADAS")
     puertoServicio= os.getenv("SERVICE_ENTRADAS_PORT")
     if current_app.debug:
-        url = f"http://localhost:{puertoServicio}/entradas/?idWiki={id}" #borrar cuando se use docker
+        url = f"http://localhost:{puertoServicio}/entradas/?idWiki={id}"
     else:
         url = f"http://{nombreServicio}:{puertoServicio}/entradas/?idWiki={id}"
     resultado = requests.get(url)

@@ -55,35 +55,67 @@ def create_comments():
         datos["idUsuarioRedactor"] = ObjectId(datos["idUsuarioRedactor"])
         datos["idEntrada"] = ObjectId(datos["idEntrada"])
     except Exception as e:
-        return jsonify({"error": f"Error al convertir los ID: {str(e) }"}), 400
-    
-    comentarios.insert_one(datos)
+        return jsonify({"error": f"Error al convertir los datos del comentario: {str(e) }"}), 400
+    try:
+        comentarios.insert_one(datos)
+    except Exception as e:
+        return jsonify({"error": f"Error al convertir los datos del comentario: {e}"}), 400
     return jsonify({"message": f"Comentario creado correctamente"})
 
 
 # DELETE /comentarios
-@comentario_bp.route("/", methods = ['DELETE'])
+@comentario_bp.route("/<id>", methods = ['DELETE'])
 def delete_comments(id):
-    filtro = {"_id": ObjectId(id)}
-    comentario = comentario.find_one(filtro)
+    try:
+        filtro = {"_id": ObjectId(id)}
+    except Exception as e:
+        return jsonify({"error": f"Id no valida:{e}"}),400
+    comentario = comentarios.find_one(filtro)
     if comentario:
-        comentario.delete_one(filtro)
+        comentarios.delete_one(filtro)
         return jsonify({"message": f"Comentario con ID {id} eliminado correctamente"}), 200
     else:
         return jsonify({"error": "Comentario no encontrado"}), 404
 
+@comentario_bp.route("/", methods = ['DELETE'])
+def delete_comments_byIdEntrada():
+    try:
+        data = request.json
+        idEntrada = data["idEntrada"]
+        filtro = {"idEntrada": ObjectId(idEntrada)}
+        comentarios.delete_many(filtro)
+        return jsonify({"message": f"Comentarios de la entrada con ID {idEntrada} eliminados correctamente"}), 200
+    except Exception as e:
+        return jsonify({"error": f"Error al eliminar los comentarios de la entrada: {e}"}), 400
+
 # actualiza un comentario de una entrada
-@comentario_bp.route("/", methods = ['PUT'])
+@comentario_bp.route("/<id>", methods = ['PUT'])
 def update_comments(id):
     datos = request.json
     if not datos:
         return jsonify({"error": "Datos no válidos"}), 400
-    filtro = {"_id": ObjectId(id)}
-    entrada_existente = comentarios.find_one(filtro)
-    if not entrada_existente:
-        return jsonify({"error": "Entrada no encontrada"}), 404
-    
-    comentarios.update_one(filtro, {"$set": datos})
+    try:
+        filtro = {"_id": ObjectId(id)}
+    except Exception as e:
+        return jsonify({"error": f"Id invalido:{e}"}),400
+
+    newData = {}
+    print(datos)
+    try:
+        if datos.get("contenido"):
+            newData["contenido"] = datos["contenido"]
+        if datos.get("idUsuarioRedactor"):
+            newData["idUsuarioRedactor"] = ObjectId(datos["idUsuarioRedactor"])
+        if datos.get("idEntrada"):
+            newData["idEntrada"] = ObjectId(datos["idEntrada"])
+        if datos.get("editado"):
+            newData["editado"] = datos["editado"]
+    except Exception as e:
+        return jsonify({"error": f"Error al convertir los ID: {str(e) }"}), 400
+    try:
+        comentarios.find_one_and_update(filtro, {"$set": newData})
+    except Exception as e:
+        return jsonify({"error": f"No se ha podido modificar el comentario: {e}"}), 400
     return jsonify({"message": f"Comentario con ID {id} actualizado correctamente"}), 200
 
 

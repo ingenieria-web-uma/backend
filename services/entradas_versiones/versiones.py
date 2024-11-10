@@ -116,36 +116,44 @@ def update_version(id):
 @versiones_bp.route("/<id>", methods=['DELETE'])
 def delete_version(id):
     try:
-        query = {"_id": ObjectId(id)}
-    except Exception as e:
-        return jsonify({"error": f"Id invalida: {e}"}), 404
-    try:
-        currentEntrada = versiones.find_one(query)
-        idEntrada = currentEntrada["idEntrada"]
-        if current_app.debug:
-            requests.delete(f"http://localhost:{os.getenv("SERVICE_COMENTARIOS_PORT")}/comentarios/{idEntrada}")
+        filtro = {"_id": ObjectId(id)}
+        version = versiones.find_one(filtro)
+        if version:
+            versiones.delete_one(filtro)
+            return jsonify({"message": f"Versión con ID {id} eliminada correctamente"}), 200
         else:
-            requests.delete(f"http://{os.getenv("ENDPOINT_COMENTARIOS")}:{os.getenv("SERVICE_COMENTARIOS_PORT")}/comentarios/{idEntrada}")
-        versiones.find_one_and_delete(query)
-        return jsonify({"message": f"Version con id {id} eliminada correctamente"}), 200
+            return jsonify({"error": "Versión no encontrada"}), 404
     except Exception as e:
-        return jsonify({"error": f"Error al eliminar la version: {e}"}), 400
+        return jsonify({"error": f"Error al eliminar la versión: {str(e)}"}), 400
 
-# DELETE /versiones
+# DELETE /versiones/
 @versiones_bp.route("/", methods=['DELETE'])
 def delete_versions_byEntradaId():
     body = request.json
     if not body:
         return jsonify({"error": "Datos no válidos"}), 400
+
     try:
-        idEntrada = ObjectId(body["idEntrada"])
+        idEntrada = body["idEntrada"]
     except Exception as e:
         return jsonify({"error": f"Id de entrada no válido. {e}"}), 400
 
-    query = {"idEntrada": idEntrada}
-
+    idVersionesABorrar = []
     try:
-        versiones.delete_many(query)
-        return jsonify({"message": f"Versiones de la entrada con id {idEntrada} eliminadas correctamente"}), 200
+        for versionByEntrada in versiones.find({"idEntrada": ObjectId(idEntrada)}):
+            idV = json.loads(json_util.dumps(versionByEntrada))["_id"]["$oid"]
+            idVersionesABorrar.append(idV)
+        print(idVersionesABorrar)
+
+        if len(idVersionesABorrar) > 0:
+            with current_app.test_client() as client:
+                for idVersion in idVersionesABorrar:
+                    if current_app.debug:
+                        requests.delete(f"http://localhost:{os.getenv("SERVICE_ENTRADAS_PORT")}/entradas", json={"idVersion": idVersion})
+                    else:
+                        requests.delete(f"http://{os.getenv("ENDPOINT_ENTRADAS")}:{os.getenv("SERVICE_ENTRADAS_PORT")}/entradas", json={"idVersion": idVersion})
+                    client.delete(f"/versiones/{idVersion}")
     except Exception as e:
-        return jsonify({"error": f"Error al eliminar las versiones: {e}"}), 400
+        return jsonify({"error": f"Error al buscar las versiones: {str(e)}"}), 400
+
+    return jsonify({"message": f"Se han eliminado las versiones asociadas a la entrada con ID {idEntrada}"}), 200

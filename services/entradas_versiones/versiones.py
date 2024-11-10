@@ -19,6 +19,7 @@ client = pymongo.MongoClient(MONGO_URL)
 db = client.laWiki
 versiones = db.versiones
 
+# GET /versiones
 @versiones_bp.route("/", methods=['GET'])
 def get_versions():
     data = request.args
@@ -43,6 +44,7 @@ def get_versions():
     versiones_json = json.loads(json_util.dumps(versiones_data))
     return jsonify(versiones_json), 200
 
+# GET /versiones/<id>
 @versiones_bp.route("/<id>", methods=['GET'])
 def get_versions_byId(id):
     query = {}
@@ -59,11 +61,11 @@ def get_versions_byId(id):
     else:
         return jsonify({"error": f"Version con id {id} no encontrada"}), 404
 
+# POST /versiones
 @versiones_bp.route("/", methods=['POST'])
 def create_version():
     datos = request.json
     try:
-        datos["idWiki"] = ObjectId(datos["idWiki"])
         datos["idUsuario"] = ObjectId(datos["idUsuario"])
         datos["idEntrada"] = ObjectId(datos["idEntrada"])
         datos["contenido"] = datos["contenido"]

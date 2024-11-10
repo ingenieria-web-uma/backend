@@ -60,7 +60,7 @@ def create_comments():
         comentarios.insert_one(datos)
     except Exception as e:
         return jsonify({"error": f"Error al convertir los datos del comentario: {e}"}), 400
-    return jsonify({"message": f"Comentario creado correctamente"})
+    return jsonify({"message": f"Comentario creado correctamente"}), 201
 
 
 # DELETE /comentarios
@@ -120,4 +120,3 @@ def update_comments(id):
 
 
 
-   

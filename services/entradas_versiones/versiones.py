@@ -29,8 +29,6 @@ def get_versions():
         if data:
             if data.get("idEntrada"):
                 query["idEntrada"] = ObjectId(data.get("idEntrada"))
-            if data.get("idWiki"):
-                query["idWiki"] = ObjectId(data.get("idWiki"))
             if data.get("idUsuario"):
                 query["idUsuario"] = ObjectId(data.get("idUsuario"))
             if data.get("contenido"):
@@ -72,7 +70,7 @@ def create_version():
         datos["fechaEdicion"] = datetime.now()
     except Exception as e:
         return jsonify({"error": f"Datos no válidos. {e}"}), 400
-    
+
     try:
         response = versiones.insert_one(datos)
         if response:
@@ -88,12 +86,10 @@ def update_version(id):
     datos = request.json
     if not datos:
         return jsonify({"error": "Datos no válidos"}), 400
-    
+
     newValues = {}
 
     try:
-        if datos.get("idWiki"):
-            newValues["idWiki"] = ObjectId(datos["idWiki"])
         if datos.get("idUsuario"):
             newValues["idUsuario"] = ObjectId(datos["idUsuario"])
         if datos.get("idEntrada"):

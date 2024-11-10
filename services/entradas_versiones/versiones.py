@@ -76,8 +76,7 @@ def create_version():
         if response:
             return jsonify({"message": "Version creada correctamente"}), 201
     except Exception as e:
-        return jsonify({"error": f"Error al insertar la version: {e}"}), 500
-
+        return jsonify({"error": f"Error al insertar la version: {e}"}), 400
 
     return jsonify({"message": "Version creada correctamente"}), 201
 
@@ -87,13 +86,13 @@ def update_version(id):
     datos = request.json
     if not datos:
         return jsonify({"error": "Datos no válidos"}), 400
-    
+
     try:
         filtro = {"_id": ObjectId(id)}
         versiones.find_one(filtro)
     except Exception as e:
         return jsonify({"error": f"Version no encontrada"}), 404
-    
+
     try:
         if datos.get("idUsuario"):
             datos["idUsuario"] = ObjectId(datos["idUsuario"])
@@ -103,7 +102,7 @@ def update_version(id):
             datos["contenido"] = datos["contenido"]
     except Exception as e:
         return jsonify({"error": f"Datos no válidos. {e}"}), 400
-    
+
     if datos:
         datos["fechaEdicion"] = datetime.now()
 
@@ -119,18 +118,18 @@ def delete_version(id):
     try:
         query = {"_id": ObjectId(id)}
     except Exception as e:
-        return jsonify({"error": f"Id invalida: {e}"})
+        return jsonify({"error": f"Id invalida: {e}"}), 404
     try:
         currentEntrada = versiones.find_one(query)
         idEntrada = currentEntrada["idEntrada"]
         if current_app.debug:
             requests.delete(f"http://localhost:{os.getenv("SERVICE_COMENTARIOS_PORT")}/comentarios/{idEntrada}")
         else:
-            requests.delete(f"http://{os.getenv("ENDPOINT_COMENTARIOS")}:{os.getenv('SERVICE_COMENTARIOS_PORT')}/comentarios/{idEntrada}")
+            requests.delete(f"http://{os.getenv("ENDPOINT_COMENTARIOS")}:{os.getenv("SERVICE_COMENTARIOS_PORT")}/comentarios/{idEntrada}")
         versiones.find_one_and_delete(query)
         return jsonify({"message": f"Version con id {id} eliminada correctamente"}), 200
     except Exception as e:
-        return jsonify({"error": f"Error al eliminar la version: {e}"}), 500
+        return jsonify({"error": f"Error al eliminar la version: {e}"}), 400
 
 # DELETE /versiones
 @versiones_bp.route("/", methods=['DELETE'])
@@ -149,4 +148,4 @@ def delete_versions_byEntradaId():
         versiones.delete_many(query)
         return jsonify({"message": f"Versiones de la entrada con id {idEntrada} eliminadas correctamente"}), 200
     except Exception as e:
-        return jsonify({"error": f"Error al eliminar las versiones: {e}"}), 500
+        return jsonify({"error": f"Error al eliminar las versiones: {e}"}), 400

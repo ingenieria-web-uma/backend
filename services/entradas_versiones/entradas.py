@@ -65,7 +65,6 @@ def create_entry():
     if not datos:
         return jsonify({"error": "Datos no válidos"}), 400
 
-
     try:
         datos["idVersionActual"] = ObjectId(datos["idVersionActual"])
         datos["idWiki"] = ObjectId(datos["idWiki"])

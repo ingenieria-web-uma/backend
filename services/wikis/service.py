@@ -23,7 +23,7 @@ def get_wikis():
     try:
         nombre = request.args.get("nombre")
     except Exception as e:
-        return jsonify({"error": "Error al leer parámetros de consulta"}),400        
+        return jsonify({"error": "Error al leer parámetros de consulta"}), 400
     try:
         if nombre: #Si tenemos idWiki buscamos parametrizadamente
             print("Busqueda parametrizada con idWiki")
@@ -53,7 +53,7 @@ def get_wikis_byId(id):
         return jsonify(resultado_json)
     else:
         print(f"Error al obtener la wiki con id {id}")
-        return {"error":"Wiki con id especificado no encontrada", "status_code":404}
+        return jsonify({"error":"Wiki con id especificado no encontrada"}), 404
 
 #POST /wikis/
 
@@ -68,7 +68,7 @@ def create_wiki():
     wiki_existente = wikis.find_one({"nombre":{"$regex": nombre}})
 
     if wiki_existente:
-        return {"error": f"Wiki con nombre {nombre} ya existe", "status_code": 404}
+        return jsonify({"error": f"Wiki con nombre {nombre} ya existe"}), 404
     else:
         wikis.insert_one(datos)
         return jsonify({"response": f"Wiki {nombre} creada correctamente"}), 201
@@ -79,13 +79,13 @@ def create_wiki():
 def update_wiki(id):
     data = request.json
     dataFormateada = {"$set":data}
-    respuesta = wikis.find_one_and_update({"_id":ObjectId(id)},dataFormateada, return_document=True)
+    respuesta = wikis.find_one_and_update({"_id":ObjectId(id)}, dataFormateada, return_document=True)
     print(respuesta)
 
     if respuesta is None:
-        return {"error":f"Error al actualizar la wiki {id}", "status_code":404}
+        return jsonify({"error":f"Error al actualizar la wiki {id}"}), 404
     else:
-        return {"response":f"Wiki {respuesta["nombre"]} modificada correctamente", "status_code":200}
+        return jsonify({"response":f"Wiki {respuesta["nombre"]} modificada correctamente"}), 200
 
 #DELETE /wikis/<id>
 
@@ -129,6 +129,6 @@ def get_entradas_byWiki(id):
         url = f"http://{nombreServicio}:{puertoServicio}/entradas/?idWiki={id}"
     resultado = requests.get(url)
     if resultado.status_code != 200:
-        return {"error":"No se ha podido solicitar las entradas de la wiki", "status_code":404}
+        return jsonify({"error":"No se ha podido solicitar las entradas de la wiki"}), 404
     else:
         return jsonify(resultado.json())

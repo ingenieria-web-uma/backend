@@ -170,9 +170,9 @@ def get_wikis_for_entry(id):
             wiki_raw = requests.get(f"http://{wikiServiceName}:{wikiServicePort}/wikis/{wiki_id}")
 
         if wiki_raw.status_code == 200:
-            return jsonify(wiki_raw.json()),200
+            return jsonify(wiki_raw.json()), 200
         else:
-            return {"error":"Error al obtener la wiki de la entrada", "status_code":400}, 400
+            return jsonify({"error":"Error al obtener la wiki de la entrada"}), 400
     else:
         return jsonify({"error": "Entrada no encontrada"}), 404
 
@@ -194,9 +194,9 @@ def get_comentarios_for_entry(id):
 
             comentarios_raw = requests.get(url)
             if comentarios_raw.status_code == 200:
-                return jsonify(comentarios_raw.json()),200
+                return jsonify(comentarios_raw.json()), 200
             else:
-                return {"error":"Error al obtener los comentarios de la entrada", "status_code":400}
+                return jsonify({"error":"Error al obtener los comentarios de la entrada"}), 400
         else:
             return jsonify({"error": "Entrada no encontrada"}), 404
     except Exception as e:

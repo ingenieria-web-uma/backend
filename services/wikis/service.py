@@ -25,8 +25,8 @@ def get_wikis():
     except Exception as e:
         return jsonify({"error": "Error al leer parámetros de consulta"}), 400
     try:
-        if nombre: #Si tenemos idWiki buscamos parametrizadamente
-            print("Busqueda parametrizada con idWiki")
+        if nombre: #Si tenemos nombre buscamos parametrizadamente
+            print("Busqueda parametrizada con nombre")
             wiki = wikis.find({"nombre":{"$regex": nombre}})
         else:
             print("Busqueda general")

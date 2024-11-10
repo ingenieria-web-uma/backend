@@ -13,7 +13,7 @@ app.register_blueprint(comentario_bp, url_prefix="/comentarios")
 
 @app.route("/")
 def main_route():
-    return "<a href='http://127.0.0.1:5002/comentarios'>CLICK AQUI PARA IR AL APARTADO DE LAS COMENTARIOS</a>"
+    return f"<a href='http://127.0.0.1:{os.getenv("SERVICE_COMENTARIOS_PORT")}/comentarios'>CLICK AQUI PARA IR AL APARTADO DE LAS COMENTARIOS</a>"
 
 # Ejecutar la aplicación Flask
 if __name__ == "__main__":

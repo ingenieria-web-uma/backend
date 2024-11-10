@@ -117,6 +117,3 @@ def update_comments(id):
     except Exception as e:
         return jsonify({"error": f"No se ha podido modificar el comentario: {e}"}), 400
     return jsonify({"message": f"Comentario con ID {id} actualizado correctamente"}), 200
-
-
-

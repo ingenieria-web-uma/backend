@@ -88,8 +88,8 @@ def update_version(id):
     if not datos:
         return jsonify({"error": "Datos no válidos"}), 400
     
-    filtro = {"_id": ObjectId(id)}
     try:
+        filtro = {"_id": ObjectId(id)}
         versiones.find_one(filtro)
     except Exception as e:
         return jsonify({"error": f"Version no encontrada"}), 404
@@ -112,33 +112,8 @@ def update_version(id):
         return jsonify({"message": f"Version con id {id} actualizada correctamente"}), 200
     except Exception as e:
         return jsonify({"error": f"Error al actualizar la version: {e}"}), 400
-    # datos = request.json
-    # if not datos:
-    #     return jsonify({"error": "Datos no válidos"}), 400
 
-    # newValues = {}
-
-    # try:
-    #     if datos.get("idUsuario"):
-    #         newValues["idUsuario"] = ObjectId(datos["idUsuario"])
-    #     if datos.get("idEntrada"):
-    #         newValues["idEntrada"] = ObjectId(datos["idEntrada"])
-    #     if datos.get("contenido"):
-    #         newValues["contenido"] = datos["contenido"]
-    # except Exception as e:
-    #     return jsonify({"error": f"Datos no válidos. {e}"}), 400
-    # if newValues:
-    #     newValues["fechaEdicion"] = datetime.now()
-    # try:
-    #     query = {"_id": ObjectId(id)}
-    # except Exception as e:
-    #     return jsonify({"error": f"Id no valido. {e}"}), 400
-    # try:
-    #     versiones.update_one(query, {"$set": newValues})
-    #     return jsonify({"message": f"Version con id {id} actualizada correctamente"}), 200
-    # except Exception as e:
-    #     return jsonify({"error": f"Error al actualizar la version: {e}"}), 500
-
+# DELETE /versiones/<id>
 @versiones_bp.route("/<id>", methods=['DELETE'])
 def delete_version(id):
     try:
@@ -157,6 +132,7 @@ def delete_version(id):
     except Exception as e:
         return jsonify({"error": f"Error al eliminar la version: {e}"}), 500
 
+# DELETE /versiones
 @versiones_bp.route("/", methods=['DELETE'])
 def delete_versions_byEntradaId():
     body = request.json

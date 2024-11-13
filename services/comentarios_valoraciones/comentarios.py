@@ -11,7 +11,7 @@ from flask import Blueprint, jsonify, request
 load_dotenv()
 MONGO_URL = os.getenv("MONGO_URL")
 
-comentario_bp = Blueprint('comentario_bp', __name__)
+comentarios_bp = Blueprint('comentarios_bp', __name__)
 
 # Configuración de MongoDB
 client = pymongo.MongoClient(MONGO_URL)
@@ -21,7 +21,7 @@ comentarios = db.comentarios
 # MicroServicio de COMENTARIOS
 
 # GET /comentarios
-@comentario_bp.route("/", methods = ['GET'])
+@comentarios_bp.route("/", methods = ['GET'])
 def view_comments():
     try:
         idUsuario = request.args.get("idUsuarioRedactor")
@@ -46,7 +46,7 @@ def view_comments():
     return jsonify(comentarios_json)
 
 # POST /comentarios
-@comentario_bp.route("/", methods = ['POST'])
+@comentarios_bp.route("/", methods = ['POST'])
 def create_comments():
     datos = request.json
     if not datos:
@@ -64,7 +64,7 @@ def create_comments():
 
 
 # DELETE /comentarios
-@comentario_bp.route("/<id>", methods = ['DELETE'])
+@comentarios_bp.route("/<id>", methods = ['DELETE'])
 def delete_comments(id):
     try:
         filtro = {"_id": ObjectId(id)}
@@ -77,7 +77,7 @@ def delete_comments(id):
     else:
         return jsonify({"error": "Comentario no encontrado"}), 404
 
-@comentario_bp.route("/", methods = ['DELETE'])
+@comentarios_bp.route("/", methods = ['DELETE'])
 def delete_comments_byIdEntrada():
     try:
         data = request.json
@@ -89,7 +89,7 @@ def delete_comments_byIdEntrada():
         return jsonify({"error": f"Error al eliminar los comentarios de la entrada: {e}"}), 400
 
 # actualiza un comentario de una entrada
-@comentario_bp.route("/<id>", methods = ['PUT'])
+@comentarios_bp.route("/<id>", methods = ['PUT'])
 def update_comments(id):
     datos = request.json
     if not datos:

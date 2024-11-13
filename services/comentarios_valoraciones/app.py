@@ -2,14 +2,16 @@ import os
 
 from dotenv import load_dotenv
 from flask import Flask
-from service import comentario_bp
+from comentarios import comentarios_bp
+from valoraciones import valoraciones_bp
 
 load_dotenv()
 
 app = Flask(__name__)
 
 # Registrar los microservicios como Blueprints
-app.register_blueprint(comentario_bp, url_prefix="/comentarios")
+app.register_blueprint(comentarios_bp, url_prefix="/comentarios")
+app.register_blueprint(valoraciones_bp, url_prefix="/v2/valoraciones")
 
 @app.route("/")
 def main_route():

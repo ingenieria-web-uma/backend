@@ -1,3 +1,5 @@
+from typing import List
+
 from pydantic import BaseModel, Field, root_validator
 from pydantic_mongo import PydanticObjectId
 
@@ -38,3 +40,6 @@ class EntradaNew(BaseModel):
         if 'slug' not in valores or not valores['slug']:
             valores['slug'] = valores['nombre'].lower().replace(" ", "-")
         return valores
+
+class ColeccionEntradas(BaseModel):
+    entradas: List[Entrada]

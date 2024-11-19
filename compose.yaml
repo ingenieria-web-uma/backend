@@ -1,5 +1,7 @@
 x-service-base: &service-base
   build:
+    args:
+      MODEL_PATH: models
     context: .
     dockerfile: Dockerfile
   env_file:

@@ -1,15 +1,16 @@
 import json
 import os
 
-from fastapi import APIRouter, HTTPException, Response, status
 import pymongo
 import requests
 from bson import json_util
 from bson.objectid import ObjectId
 from dotenv import load_dotenv
+from fastapi import APIRouter, HTTPException, Response, status
 from flask import Blueprint, current_app, jsonify, request
+
 #from comentarios_valoraciones import app
-from models.entrada import Entrada, ColeccionEntradas
+from models.entrada import Entrada, EntradaList
 
 load_dotenv()
 MONGO_URL = os.getenv("MONGO_URL")
@@ -25,7 +26,7 @@ db = client.laWiki
 entradas = db.entradas
 
 # GET /entradas
-@entradas_router.get("/", response_model=ColeccionEntradas)
+@entradas_router.get("/", response_model=EntradaList)
 def get_entries(nombre: str = None, idWiki: str = None):
     query = {}
     if nombre:
@@ -38,7 +39,7 @@ def get_entries(nombre: str = None, idWiki: str = None):
     
     try:
         entradas_data = entradas.find(query).to_list(1000)
-        return ColeccionEntradas(entradas = entradas_data)
+        return EntradaList(entradas = entradas_data)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error al buscar las entradas: {str(e)}")
 

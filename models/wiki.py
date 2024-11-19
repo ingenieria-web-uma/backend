@@ -1,3 +1,5 @@
+from typing import List
+
 from pydantic import BaseModel, Field
 from pydantic_mongo import PydanticObjectId
 
@@ -11,3 +13,6 @@ class WikiUpdate(BaseModel):
 
 class WikiNew(BaseModel):
     nombre: str
+
+class WikiList(BaseModel):
+    wikis: List[Wiki]

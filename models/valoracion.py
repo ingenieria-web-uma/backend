@@ -1,3 +1,5 @@
+from typing import List
+
 from pydantic import BaseModel, Field
 from pydantic_mongo import PydanticObjectId
 
@@ -15,3 +17,6 @@ class ValoracionNew(BaseModel):
 
 class ValoracionUpdate(BaseModel):
     nota : int = Field(..., ge=0, le=5)
+
+class ValoracionList(BaseModel):
+    valoraciones: List[Valoracion]

@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import List
 
 from pydantic import BaseModel, Field
 from pydantic_mongo import PydanticObjectId
@@ -16,3 +17,6 @@ class VersionNew(BaseModel):
     idEntrada: PydanticObjectId
     contenido: str
     fechaEdicion: datetime = Field(default_factory=datetime.now)
+
+class VersionList(BaseModel):
+    versiones: List[Version]

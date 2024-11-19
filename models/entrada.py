@@ -41,5 +41,5 @@ class EntradaNew(BaseModel):
             valores['slug'] = valores['nombre'].lower().replace(" ", "-")
         return valores
 
-class ColeccionEntradas(BaseModel):
+class EntradaList(BaseModel):
     entradas: List[Entrada]

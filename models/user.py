@@ -1,3 +1,5 @@
+from typing import List
+
 from pydantic import BaseModel, Field
 from pydantic_mongo import PydanticObjectId
 
@@ -20,3 +22,6 @@ class UserNew(BaseModel):
     email: str
     password: str
     role: str
+
+class UserList(BaseModel):
+    users: List[User]

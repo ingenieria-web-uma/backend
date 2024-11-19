@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import List
 
 from pydantic import BaseModel, Field
 from pydantic_mongo import PydanticObjectId
@@ -21,3 +22,6 @@ class ComentarioNew(BaseModel):
 class ComentarioUpdate(BaseModel):
     contenido: str
     fechaEdicion: datetime = Field(default_factory=datetime.now)
+
+class ComentarioList(BaseModel):
+    comentarios: List[Comentario]

@@ -6,14 +6,21 @@ import requests
 from bson import json_util
 from bson.objectid import ObjectId
 from dotenv import load_dotenv
-from flask import Blueprint, jsonify, request
+# from flask import Blueprint, jsonify, request
+from fastapi import (APIRouter, File, HTTPException, Response, UploadFile,
+                     status)
 
-
+from models.archivo import ArchivoNew
 
 load_dotenv()
 MONGO_URL = os.getenv("MONGO_URL")
 
-archivos_bp = Blueprint('archivos_bp', __name__)
+# archivos_bp = Blueprint('archivos_bp', __name__)
+archivos_bp = APIRouter(
+    prefix="/v2/archivos",
+    tags=['archivos']
+    )
+
 
 # Configuración de MongoDB
 client = pymongo.MongoClient(MONGO_URL)
@@ -36,11 +43,13 @@ cloudinary.config(
 
 # Subir un archivo (POST)
 
-@archivos_bp.route("/subir", methods=["POST"])
+@archivos_bp.post("/subir")
 
-def subir_archivo():
+async def subir_archivo(file: UploadFile):
     # Obtener el archivo
-    archivo = request.files["archivo"]
+    archivo = file
+    print(archivo.filename)
+
     # Subir el archivo a Cloudinary
     upload_result = cloudinary.uploader.upload(archivo)
     # Guardar la URL en la base de datos
@@ -50,5 +59,5 @@ def subir_archivo():
         "nombre": nombre,
         "url": url
     }
-    archivos.insert_one(archivo)
-    return jsonify({"mensaje": f"Archivo con nombre { nombre } subido exitosamente"})
+    archivos.insert_one(ArchivoNew(**archivo))
+    return ({"mensaje": f"Archivo con nombre { nombre } subido exitosamente"}), 201

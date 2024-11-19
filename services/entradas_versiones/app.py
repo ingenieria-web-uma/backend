@@ -1,8 +1,11 @@
 import os
-from fastapi import FastAPI
+
 from dotenv import load_dotenv
+from fastapi import FastAPI
 from flask import Flask
-from entradas import entradas_router
+
+from .entradas import entradas_router
+
 #from versiones import versiones_router
 
 load_dotenv()

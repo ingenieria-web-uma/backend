@@ -26,7 +26,10 @@ USER appuser
 ARG SERVICE_PATH
 COPY ${SERVICE_PATH} .
 
+ARG MODEL_PATH
+COPY ${MODEL_PATH} .
+
 ARG SERVICE_PORT
 EXPOSE ${SERVICE_PORT}
 
-CMD ["python", "app.py"]
+CMD ["fastapi", "dev", "app.py"]

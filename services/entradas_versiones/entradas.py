@@ -21,7 +21,7 @@ entradas_router = APIRouter(
 
 # Configuración de MongoDB
 client = pymongo.MongoClient(MONGO_URL)
-db = client.laWiki
+db = client.laWikiv2
 entradas = db.entradas
 
 # GET /entradas

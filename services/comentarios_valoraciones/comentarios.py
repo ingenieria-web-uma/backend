@@ -15,7 +15,7 @@ comentarios_bp = Blueprint('comentarios_bp', __name__)
 
 # Configuración de MongoDB
 client = pymongo.MongoClient(MONGO_URL)
-db = client.laWiki
+db = client.laWikiv2
 comentarios = db.comentarios
 
 # MicroServicio de COMENTARIOS

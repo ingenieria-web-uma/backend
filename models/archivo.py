@@ -2,12 +2,15 @@ from pydantic import BaseModel, Field
 from pydantic_mongo import PydanticObjectId
 
 
-class Wiki(BaseModel):
+class Archivo(BaseModel):
     id: PydanticObjectId = Field(alias='_id')
     nombre: str
+    url: str
 
-class WikiUpdate(BaseModel):
+class ArchivoNew(BaseModel):
     nombre: str
+    url: str
 
-class WikiNew(BaseModel):
+class ArchivoUpdate(BaseModel):
     nombre: str
+    url: str

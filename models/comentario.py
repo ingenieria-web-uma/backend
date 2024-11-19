@@ -4,15 +4,20 @@ from pydantic import BaseModel, Field
 from pydantic_mongo import PydanticObjectId
 
 
-class Version(BaseModel):
+class Comentario(BaseModel):
     id: PydanticObjectId = Field(alias='_id')
     idUsuario: PydanticObjectId
     idEntrada: PydanticObjectId
     contenido: str
-    fechaEdicion: datetime = Field(default_factory=datetime.now)
+    fechaCreacion: datetime
+    fechaEdicion: datetime
 
-class VersionNew(BaseModel):
+class ComentarioNew(BaseModel):
     idUsuario: PydanticObjectId
     idEntrada: PydanticObjectId
+    contenido: str
+    fechaCreacion: datetime = Field(default_factory=datetime.now)
+
+class ComentarioUpdate(BaseModel):
     contenido: str
     fechaEdicion: datetime = Field(default_factory=datetime.now)

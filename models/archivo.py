@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from pydantic import BaseModel, Field
 from pydantic_mongo import PydanticObjectId
@@ -14,8 +14,8 @@ class ArchivoNew(BaseModel):
     url: str
 
 class ArchivoUpdate(BaseModel):
-    nombre: str
-    url: str
+    nombre: Optional[str] = None
+    url: Optional[str] = None
 
 class ArchivoList(BaseModel):
     archivos: List[Archivo]

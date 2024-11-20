@@ -1,15 +1,22 @@
-from typing import List
-from pydantic import BaseModel, Field, EmailStr, field_validator
-from pydantic_mongo import PydanticObjectId
-from typing import Optional
 import re
+from enum import Enum
+from typing import List, Optional
+
+from pydantic import BaseModel, Field, field_validator
+from pydantic_mongo import PydanticObjectId
+
+
+class UserRole(str, Enum):
+    admin = "admin"
+    base = "base"
+    redactor = "redactor"
 
 class User(BaseModel):
     id: PydanticObjectId = Field(alias='_id')
     name: str
     email: str
     password: str
-    role: str
+    role: UserRole
 
     @field_validator('email')
     def validate_email(cls, v):
@@ -22,7 +29,7 @@ class UserUpdate(BaseModel):
     name: Optional[str] = None
     email: Optional[str] = None
     password: Optional[str] = None
-    role: Optional[str] = None
+    role: Optional[UserRole] = None
 
     @field_validator('email')
     def validate_email(cls, v):
@@ -35,7 +42,7 @@ class UserNew(BaseModel):
     name: str
     email: str
     password: str
-    role: str
+    role: UserRole
 
     @field_validator('email')
     def validate_email(cls, v):

@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from pydantic import BaseModel, Field, root_validator
 from pydantic_mongo import PydanticObjectId
@@ -9,37 +9,39 @@ class Entrada(BaseModel):
     idWiki: PydanticObjectId
     idVersionActual: PydanticObjectId
     nombre: str
-    slug: str = ""
-
-    @root_validator(pre=True)
-    def generar_slug(cls, valores):
-        if 'slug' not in valores or not valores['slug']:
-            valores['slug'] = valores['nombre'].lower().replace(" ", "-")
-        return valores 
+    slug: str
 
 class EntradaUpdate(BaseModel):
-    idWiki: PydanticObjectId
-    idVersionActual: PydanticObjectId
-    nombre: str
-    slug: str = ""
+    idWiki: Optional[PydanticObjectId] = None
+    idVersionActual: Optional[PydanticObjectId] = None
+    nombre: Optional[str] = None
+    slug: Optional[str] = None
     
     @root_validator(pre=True)
     def generar_slug(cls, valores):
-        if 'slug' not in valores or not valores['slug']:
+        if "slug" in valores:
+            valores["slug"] = None
+        if "nombre" in valores:
             valores['slug'] = valores['nombre'].lower().replace(" ", "-")
         return valores
+
+    class Config:
+        exclude = {'slug'}
 
 class EntradaNew(BaseModel):
     idWiki: PydanticObjectId
     idVersionActual: PydanticObjectId
     nombre: str
-    slug: str = ""
+    slug: Optional[str] = None
 
     @root_validator(pre=True)
     def generar_slug(cls, valores):
-        if 'slug' not in valores or not valores['slug']:
+        if 'nombre' in valores:
             valores['slug'] = valores['nombre'].lower().replace(" ", "-")
         return valores
+
+    class Config:
+        exclude = {'slug'}
 
 class EntradaList(BaseModel):
     entradas: List[Entrada]

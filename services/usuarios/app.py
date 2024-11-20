@@ -3,7 +3,7 @@ import os
 import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI
-from .usuarios import usuarios_router
+from usuarios import usuarios_router
 
 load_dotenv()
 

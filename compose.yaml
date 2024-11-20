@@ -37,3 +37,13 @@ services:
     container_name: comentarios_valoraciones
     ports:
       - ${SERVICE_COMENTARIOS_PORT}:${SERVICE_COMENTARIOS_PORT}
+
+  usuarios:
+    <<: *service-base
+    build:
+      args:
+        SERVICE_PATH: services/usuarios
+        SERVICE_PORT: ${SERVICE_USUARIOS_PORT}
+    container_name: usuarios
+    ports:
+      - ${SERVICE_USUARIOS_PORT}:${SERVICE_USUARIOS_PORT}

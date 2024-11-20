@@ -1,12 +1,7 @@
-import json
 import os
 
 import pymongo
-import requests
-from bson import json_util
-from bson.objectid import ObjectId
 from dotenv import load_dotenv
-# from flask import Blueprint, jsonify, request
 from fastapi import (APIRouter, File, HTTPException, Response, UploadFile,
                      status)
 
@@ -15,7 +10,6 @@ from models.archivo import ArchivoNew
 load_dotenv()
 MONGO_URL = os.getenv("MONGO_URL")
 
-# archivos_bp = Blueprint('archivos_bp', __name__)
 archivos_bp = APIRouter(
     prefix="/v2/archivos",
     tags=['archivos']
@@ -44,20 +38,22 @@ cloudinary.config(
 # Subir un archivo (POST)
 
 @archivos_bp.post("/subir")
-
-async def subir_archivo(file: UploadFile):
+async def subir_archivo(file: UploadFile = File(...)):
     # Obtener el archivo
-    archivo = file
-    print(archivo.filename)
+    try:
+        archivo = await file.read()
 
-    # Subir el archivo a Cloudinary
-    upload_result = cloudinary.uploader.upload(archivo)
-    # Guardar la URL en la base de datos
-    nombre = archivo.filename
-    url = upload_result["secure_url"]
-    archivo = {
-        "nombre": nombre,
-        "url": url
-    }
-    archivos.insert_one(ArchivoNew(**archivo))
+        # Subir el archivo a Cloudinary
+        upload_result = cloudinary.uploader.upload(archivo, resource_type="auto")
+        # Guardar la URL en la base de datos
+        nombre = file.filename
+        url = upload_result.get("secure_url")
+        archivo = {
+            "nombre": nombre,
+            "url": url
+        }
+        archivos.insert_one(ArchivoNew(**archivo))
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=500, detail="Error al subir el archivo")
     return ({"mensaje": f"Archivo con nombre { nombre } subido exitosamente"}), 201

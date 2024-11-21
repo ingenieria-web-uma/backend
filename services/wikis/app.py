@@ -1,20 +1,25 @@
 import os
 
+import uvicorn
 from dotenv import load_dotenv
-from flask import Flask
+from fastapi import FastAPI
 from service import wikis_bp
 
 load_dotenv()
 
-app = Flask(__name__)
+app = FastAPI()
 
 # Registrar los microservicios como Blueprints
-app.register_blueprint(wikis_bp, url_prefix="/wikis")
+app.include_router(wikis_bp)
 
 @app.route("/")
 def main_route():
-    return "<h1>laWiki</h1>"
+    return f"Servicio de wikis corriendo en el puerto {os.getenv('SERVICE_WIKIS_PORT')}"
 
-# Ejecutar la aplicación Flask
+# Ejecutar la aplicación FASTAPI
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=os.getenv("SERVICE_WIKIS_PORT"))
+    puerto = os.getenv("SERVICE_WIKIS_PORT")
+    if puerto:
+        puerto = int(puerto)
+        uvicorn.run("services.wikis.app:app", host="0.0.0.0", port=puerto, reload=True)
+

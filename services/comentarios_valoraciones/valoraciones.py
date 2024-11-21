@@ -1,17 +1,20 @@
-import json
 import os
 
 import pymongo
-import requests
-from bson import json_util
 from bson.objectid import ObjectId
 from dotenv import load_dotenv
-from flask import Blueprint, current_app, jsonify, request
+from fastapi import APIRouter, Depends, HTTPException
+
+from models.valoracion import (Valoracion, ValoracionFiltro, ValoracionList,
+                               ValoracionNew, ValoracionUpdate)
 
 load_dotenv()
 MONGO_URL = os.getenv("MONGO_URL")
 
-valoraciones_bp = Blueprint('valoraciones_bp', __name__)
+valoraciones_bp = APIRouter(
+    prefix="/v2/valoraciones",
+    tags=['valoraciones']
+)
 
 # Configuración de MongoDB
 client = pymongo.MongoClient(MONGO_URL)
@@ -19,96 +22,79 @@ db = client.laWikiv2
 valoraciones = db.valoraciones
 
 # GET /valoraciones
-@valoraciones_bp.route("/", methods=['GET'])
-def get_evaluations():
+@valoraciones_bp.get("/")
+def get_evaluations(filtro: ValoracionFiltro = Depends()):
     try:
-        idUsuarioRedactor = request.args.get("idUsuarioRedactor")
-        idUsuarioValorado = request.args.get("idUsuarioValorado")
-        nota = request.args.get("nota")
-        query = {}
-
-        if idUsuarioRedactor:
-            query["idUsuarioRedactor"] = ObjectId(idUsuarioRedactor)
-        if idUsuarioValorado:
-            query["idUsuarioValorado"] = ObjectId(idUsuarioValorado)
-        if nota:
-            query["nota"] = int(nota)
-
-        valoraciones_data = valoraciones.find(query)
-        valoraciones_json = json.loads(json_util.dumps(valoraciones_data))
-        return jsonify(valoraciones_json), 200
+        valoraciones_data = valoraciones.find(filtro.model_dump(exclude_none=True))
+        return ValoracionList(valoraciones=[valoracion for valoracion in valoraciones_data]).model_dump(exclude_none=True)
     except Exception as e:
-        return jsonify({"error": f"Error al buscar las valoraciones: {str(e)}"}), 400
+        raise HTTPException(status_code=400, detail=f"Error al buscar las valoraciones: {str(e)}")
 
 # GET /valoraciones/<id>
-@valoraciones_bp.route("/<id>", methods=['GET'])
+@valoraciones_bp.get("/{id}")
 def get_evaluation_by_id(id):
     try:
         valoracion = valoraciones.find_one({"_id": ObjectId(id)})
         if valoracion:
-            return jsonify(json.loads(json_util.dumps(valoracion))), 200
+            return Valoracion(**valoracion).model_dump()
         else:
-            return jsonify({"error": "Valoración no encontrada"}), 404
+            raise HTTPException(status_code=404, detail="Valoración no encontrada")
+    except HTTPException as e:
+        raise
     except Exception as e:
-        return jsonify({"error": f"Error al buscar la valoración: {str(e)}"}), 400
-
+        raise HTTPException(status_code=400, detail=f"Error al buscar la valoración: {str(e)}")
+#
 # POST /valoraciones
-@valoraciones_bp.route("/", methods=['POST'])
-def create_evaluation():
+@valoraciones_bp.post("/")
+def create_evaluation(newValoracion: ValoracionNew):
     try:
-        datos = request.json
-        if not datos:
-            return jsonify({"error": "Datos no válidos"}), 400
-
-        datos["idUsuarioRedactor"] = ObjectId(datos["idUsuarioRedactor"])
-        datos["idUsuarioValorado"] = ObjectId(datos["idUsuarioValorado"])
-        nota = datos.get("nota")
-
-        if not nota:
-            return jsonify({"error": "La nota es obligatoria"}), 400
-
         valoracion_existente = valoraciones.find_one({
-            "idUsuarioRedactor": datos["idUsuarioRedactor"],
-            "idUsuarioValorado": datos["idUsuarioValorado"]
+            "idUsuarioRedactor": newValoracion.idUsuarioRedactor,
+            "idUsuarioValorado": newValoracion.idUsuarioValorado
         })
 
         if valoracion_existente:
-            return jsonify({"error": "Ya existe una valoración para este usuario"}), 400
+            raise HTTPException(status_code=400, detail="Ya existe una valoración para este usuario")
 
-        valoraciones.insert_one(datos)
-
-        return jsonify({"message": f"Valoración creada correctamente"}), 201
+        res = valoraciones.insert_one(newValoracion.to_mongo_dict(exclude_none=True))
+        if res:
+            raise HTTPException(status_code=201, detail="Valoración creada correctamente")
+    except HTTPException as e:
+        raise
     except Exception as e:
-        return jsonify({"error": f"Error al crear la valoración: {str(e)}"}), 400
-
+        raise HTTPException(status_code=400, detail=f"Error al convertir los datos de la valoración: {str(e)}")
+    return {"message": "Valoración creada correctamente"}, 201
+#
 # PUT /valoraciones/<id>
-@valoraciones_bp.route("/<id>", methods=['PUT'])
-def update_evaluation(id):
+@valoraciones_bp.put("/{id}")
+def update_evaluation(id, datos:ValoracionUpdate):
     try:
-        datos = request.json
-        if not datos:
-            return jsonify({"error": "Datos no válidos"}), 400
-
-        filtro = {"_id": ObjectId(id)}
-        valoracion_existente = valoraciones.find_one(filtro)
+        idValoracion = ObjectId(id)
+        filter = {"_id": idValoracion}
+        valoracion_existente = valoraciones.find_one(filter)
         if not valoracion_existente:
-            return jsonify({"error": "Valoración no encontrada"}), 404
+            raise HTTPException(status_code=404, detail="Valoración no encontrada")
 
-        valoraciones.update_one(filtro, {"$set": datos})
-        return jsonify({"message": f"Valoración con ID {id} actualizada correctamente"}), 200
+        res = valoraciones.update_one(filter, {"$set": datos.to_mongo_dict(exclude_none=True)})
+        if res:
+            raise HTTPException(status_code=200, detail="Valoración actualizada correctamente")
+    except HTTPException as e:
+        raise
     except Exception as e:
-        return jsonify({"error": f"Error al actualizar la valoracion: {str(e)}"}), 400
+        raise HTTPException(status_code=400, detail=f"Error al actualizar la valoración: {str(e)}")
 
 # DELETE /valoraciones/<id>
-@valoraciones_bp.route("/<id>", methods=['DELETE'])
+@valoraciones_bp.delete("/{id}")
 def delete_evaluation(id):
     try:
         filtro = {"_id": ObjectId(id)}
         valoracion = valoraciones.find_one(filtro)
         if valoracion:
             valoraciones.delete_one(filtro)
-            return jsonify({"message": f"Valoración con ID {id} eliminada correctamente"}), 200
+            raise HTTPException(status_code=200, detail=f"Valoración con ID {id} eliminada correctamente")
         else:
-            return jsonify({"error": "Valoración no encontrada"}), 404
+            raise HTTPException(status_code=404, detail="Valoración no encontrada")
+    except HTTPException as e:
+        raise
     except Exception as e:
-        return jsonify({"error": f"Error al eliminar la valoración: {str(e)}"}), 400
+        raise HTTPException(status_code=400, detail=f"Error al eliminar la valoración: {str(e)}")

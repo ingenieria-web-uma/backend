@@ -10,6 +10,7 @@ load_dotenv()
 
 app = FastAPI()
 app.include_router(comentarios_bp)
+app.include_router(valoraciones_bp)
 
 @app.route("/")
 def main_route():

@@ -12,7 +12,7 @@ app = FastAPI()
 # Registrar los microservicios como Blueprints
 app.include_router(wikis_bp)
 
-@app.route("/")
+@app.get("/")
 def main_route():
     return f"Servicio de wikis corriendo en el puerto {os.getenv('SERVICE_WIKIS_PORT')}"
 
@@ -22,4 +22,3 @@ if __name__ == "__main__":
     if puerto:
         puerto = int(puerto)
         uvicorn.run("services.wikis.app:app", host="0.0.0.0", port=puerto, reload=True)
-

@@ -1,17 +1,22 @@
-import json
 import os
 
 import pymongo
-import requests
-from bson import json_util
 from bson.objectid import ObjectId
 from dotenv import load_dotenv
-from flask import Blueprint, jsonify, request
+from fastapi import APIRouter, Depends, HTTPException
+
+from models.comentario import (ComentarioFilter, ComentarioList, ComentarioNew,
+                               ComentarioUpdate)
+from models.entrada import EntradaId
 
 load_dotenv()
 MONGO_URL = os.getenv("MONGO_URL")
 
-comentarios_bp = Blueprint('comentarios_bp', __name__)
+comentarios_bp = APIRouter(
+    prefix="/v2/comentarios",
+    tags=['comentarios']
+)
+
 
 # Configuración de MongoDB
 client = pymongo.MongoClient(MONGO_URL)
@@ -21,99 +26,63 @@ comentarios = db.comentarios
 # MicroServicio de COMENTARIOS
 
 # GET /comentarios
-@comentarios_bp.route("/", methods = ['GET'])
-def view_comments():
-    try:
-        idUsuario = request.args.get("idUsuarioRedactor")
-        idEntrada = request.args.get("idEntrada")
-        contenido = request.args.get("contenido")
-        editado = request.args.get("editado")
-        query = {}
-    except Exception as e:
-        return jsonify({"error": "Error al leer parámetros de consulta"}), 400
-
-    if idUsuario:
-        query["idUsuarioRedactor"] = ObjectId(idUsuario)
-    if idEntrada:
-        query["idEntrada"] = ObjectId(idEntrada)
-    if contenido:
-        query["contenido"] = {"$regex": contenido, "$options": "i"}
-    if editado is not None:
-        query["editado"] = editado.lower() == "true"
-
-    comentarios_data = comentarios.find(query)
-    comentarios_json = json.loads(json_util.dumps(comentarios_data))
-    return jsonify(comentarios_json)
+@comentarios_bp.get("/")
+def view_comments(filtro: ComentarioFilter = Depends()):
+    filter = filtro.to_mongo_dict(exclude_none=True)
+    comentarios_data = comentarios.find(filter)
+    return ComentarioList(comentarios=[comentario for comentario in comentarios_data]).model_dump(exclude_none=True)
 
 # POST /comentarios
-@comentarios_bp.route("/", methods = ['POST'])
-def create_comments():
-    datos = request.json
-    if not datos:
-        return jsonify({"error": "Datos no válidos"}), 400
+@comentarios_bp.post("/")
+def create_comments(nuevoComentario: ComentarioNew):
     try:
-        datos["idUsuarioRedactor"] = ObjectId(datos["idUsuarioRedactor"])
-        datos["idEntrada"] = ObjectId(datos["idEntrada"])
+        comentarios.insert_one(nuevoComentario.to_mongo_dict(exclude_none=True))
     except Exception as e:
-        return jsonify({"error": f"Error al convertir los datos del comentario: {str(e) }"}), 400
-    try:
-        comentarios.insert_one(datos)
-    except Exception as e:
-        return jsonify({"error": f"Error al convertir los datos del comentario: {e}"}), 400
-    return jsonify({"message": f"Comentario creado correctamente"}), 201
+        raise HTTPException(status_code=400, detail=f"Error al crear el comentario: {str(e)}")
+    raise HTTPException(status_code=201, detail="Comentario creado correctamente")
 
-
-# DELETE /comentarios
-@comentarios_bp.route("/<id>", methods = ['DELETE'])
+#
+#
+# # DELETE /comentarios
+@comentarios_bp.delete("/{id}")
 def delete_comments(id):
     try:
         filtro = {"_id": ObjectId(id)}
     except Exception as e:
-        return jsonify({"error": f"Id no valida:{e}"}),400
+        raise HTTPException(status_code=400, detail=f"Id invalido:{e}")
     comentario = comentarios.find_one(filtro)
     if comentario:
         comentarios.delete_one(filtro)
-        return jsonify({"message": f"Comentario con ID {id} eliminado correctamente"}), 200
+        raise HTTPException(status_code=200, detail="Comentario eliminado correctamente")
     else:
-        return jsonify({"error": "Comentario no encontrado"}), 404
-
-@comentarios_bp.route("/", methods = ['DELETE'])
-def delete_comments_byIdEntrada():
+        raise HTTPException(status_code=404, detail="Comentario no encontrado")
+#
+@comentarios_bp.delete("/")
+def delete_comments_byIdEntrada(idEntrada: EntradaId):
     try:
-        data = request.json
-        idEntrada = data["idEntrada"]
-        filtro = {"idEntrada": ObjectId(idEntrada)}
-        comentarios.delete_many(filtro)
-        return jsonify({"message": f"Comentarios de la entrada con ID {idEntrada} eliminados correctamente"}), 200
+        res = comentarios.delete_many(idEntrada.to_mongo_dict(exclude_none=True))
+        raise HTTPException(status_code=200, detail=f"Borrados {res.deleted_count} comentarios de la entrada con ID {idEntrada.idEntrada}")
+    except HTTPException as e:
+        raise
     except Exception as e:
-        return jsonify({"error": f"Error al eliminar los comentarios de la entrada: {e}"}), 400
-
+        raise HTTPException(status_code=400, detail=f"Error al eliminar los comentarios de la entrada: {str(e)}")
+#
 # actualiza un comentario de una entrada
-@comentarios_bp.route("/<id>", methods = ['PUT'])
-def update_comments(id):
-    datos = request.json
-    if not datos:
-        return jsonify({"error": "Datos no válidos"}), 400
+@comentarios_bp.put("/{id}")
+def update_comments(id, newEntrada:ComentarioUpdate):
     try:
         filtro = {"_id": ObjectId(id)}
     except Exception as e:
-        return jsonify({"error": f"Id invalido:{e}"}),400
+        raise HTTPException(status_code=400, detail=f"Id invalido:{e}")
 
-    newData = {}
-    print(datos)
     try:
-        if datos.get("contenido"):
-            newData["contenido"] = datos["contenido"]
-        if datos.get("idUsuarioRedactor"):
-            newData["idUsuarioRedactor"] = ObjectId(datos["idUsuarioRedactor"])
-        if datos.get("idEntrada"):
-            newData["idEntrada"] = ObjectId(datos["idEntrada"])
-        if datos.get("editado"):
-            newData["editado"] = datos["editado"]
+        newData = newEntrada.to_mongo_dict(exclude_none=True)
+        res = comentarios.find_one_and_update(filtro, {"$set": newData})
+
     except Exception as e:
-        return jsonify({"error": f"Error al convertir los ID: {str(e) }"}), 400
-    try:
-        comentarios.find_one_and_update(filtro, {"$set": newData})
-    except Exception as e:
-        return jsonify({"error": f"No se ha podido modificar el comentario: {e}"}), 400
-    return jsonify({"message": f"Comentario con ID {id} actualizado correctamente"}), 200
+        raise HTTPException(status_code=400, detail=f"Error al actualizar el comentario: {e}")
+
+    if res is None:
+        raise HTTPException(status_code=404, detail="Comentario no encontrado")
+
+    raise HTTPException(status_code=200, detail="Comentario actualizado correctamente")

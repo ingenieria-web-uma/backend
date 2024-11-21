@@ -3,6 +3,11 @@ from typing import List, Optional
 from pydantic import BaseModel, Field, root_validator
 from pydantic_mongo import PydanticObjectId
 
+from models.baseMongo import MongoBase
+
+
+class EntradaId(BaseModel, MongoBase):
+    idEntrada: PydanticObjectId
 
 class Entrada(BaseModel):
     id: PydanticObjectId = Field(alias='_id')

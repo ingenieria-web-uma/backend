@@ -1,12 +1,15 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import APIRouter, HTTPException
 import httpx
 from cachetools import TTLCache
 
-app = FastAPI()
+mapas_bp = APIRouter(
+    prefix="/v2/mapas",
+    tags=['mapas']
+    )
 
 cache = TTLCache(maxsize=100, ttl=3600)
 
-@app.get("/v2/mapas")
+@mapas_bp.get("")
 async def mapas(q: str = None, lat: float = None, lon: float = None):
     if q:
         if q in cache:

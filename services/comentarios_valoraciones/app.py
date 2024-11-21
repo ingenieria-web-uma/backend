@@ -1,17 +1,16 @@
 import os
 
-from dotenv import load_dotenv
-from flask import Flask
+import uvicorn
 from comentarios import comentarios_bp
+from dotenv import load_dotenv
+from fastapi import FastAPI
 from valoraciones import valoraciones_bp
 
 load_dotenv()
 
-app = Flask(__name__)
-
-# Registrar los microservicios como Blueprints
-app.register_blueprint(comentarios_bp, url_prefix="/comentarios")
-app.register_blueprint(valoraciones_bp, url_prefix="/v2/valoraciones")
+app = FastAPI()
+app.include_router(comentarios_bp)
+app.include_router(valoraciones_bp)
 
 @app.route("/")
 def main_route():
@@ -19,4 +18,7 @@ def main_route():
 
 # Ejecutar la aplicación Flask
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=os.getenv("SERVICE_COMENTARIOS_PORT"))
+        puerto = os.getenv("SERVICE_COMENTARIOS_PORT")
+        if puerto:
+            puerto = int(puerto)
+            uvicorn.run("services.comentarios_valoraciones.app:app", host="0.0.0.0", port=puerto, reload=True)

@@ -110,8 +110,9 @@ def delete_entries_byWiki(id: str):
                 # eliminamos las versiones de la entrada
                 # client.delete(f"http://localhost:{os.getenv("SERVICE_ENTRADAS_PORT")}/versiones", json={"idEntrada": entrada.id})
                 # eliminamos la entrada
-                print(f"http://localhost:{os.getenv("SERVICE_ENTRADAS_PORT")}/entradas/{entrada["_id"]}")
-                client.delete(f"http://localhost:{os.getenv("SERVICE_ENTRADAS_PORT")}/entradas/{entrada["_id"]}")
+                entrada = entrada["_id"]
+                print(f"http://localhost:{os.getenv('SERVICE_ENTRADAS_PORT')}/entradas/{entrada}")
+                client.delete(f"http://localhost:{os.getenv('SERVICE_ENTRADAS_PORT')}/entradas/{entrada}")
         except Exception as e:
             raise HTTPException(status_code=400, detail= f"Error al buscar las entradas: {str(e)}")
     return Response(status_code=status.HTTP_204_NO_CONTENT)

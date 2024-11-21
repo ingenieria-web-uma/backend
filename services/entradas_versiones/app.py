@@ -17,7 +17,7 @@ app.include_router(entradas_router)
 
 @app.get("/")
 def main_route():
-    return f"<a href='http://127.0.0.1:{os.getenv("SERVICE_ENTRADAS_PORT")}/entradas'>CLICK AQUI PARA IR AL APARTADO DE LAS ENTRADAS</a>"
+    return f"<a href='http://127.0.0.1:{os.getenv('SERVICE_ENTRADAS_PORT')}/entradas'>CLICK AQUI PARA IR AL APARTADO DE LAS ENTRADAS</a>"
     
 if __name__ == "__main__":
         puerto = os.getenv("SERVICE_ENTRADAS_PORT")

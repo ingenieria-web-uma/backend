@@ -3,7 +3,7 @@ import os
 import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI
-from service import wikis_bp
+from services.wikis.service import wikis_bp
 
 load_dotenv()
 

@@ -4,6 +4,9 @@ from pydantic import BaseModel, Field, root_validator
 from pydantic_mongo import PydanticObjectId
 
 
+class EntradaId(BaseModel):
+    idEntrada: PydanticObjectId
+
 class Entrada(BaseModel):
     id: PydanticObjectId = Field(alias='_id')
     idWiki: PydanticObjectId

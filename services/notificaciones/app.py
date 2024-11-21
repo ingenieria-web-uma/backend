@@ -1,9 +1,7 @@
 import os
 from fastapi import FastAPI
 from dotenv import load_dotenv
-from flask import Flask
-from notificaciones import notificaciones_router
-#from versiones import versiones_router
+from .notificaciones import notificaciones_router
 
 load_dotenv()
 

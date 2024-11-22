@@ -17,6 +17,7 @@ class User(BaseModel):
     email: str
     password: str
     role: UserRole
+    wants_emails: bool
 
     @field_validator('email')
     def validate_email(cls, v):
@@ -30,6 +31,7 @@ class UserUpdate(BaseModel):
     email: Optional[str] = None
     password: Optional[str] = None
     role: Optional[UserRole] = None
+    wants_emails: bool
 
     @field_validator('email')
     def validate_email(cls, v):
@@ -43,6 +45,7 @@ class UserNew(BaseModel):
     email: str
     password: str
     role: UserRole
+    wants_emails: bool  = Field(default=True)
 
     @field_validator('email')
     def validate_email(cls, v):

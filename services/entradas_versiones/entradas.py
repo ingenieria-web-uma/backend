@@ -1,13 +1,14 @@
-import json
 import os
 
 import pymongo
+import requests
 from bson.objectid import ObjectId
 from dotenv import load_dotenv
 from fastapi import APIRouter, HTTPException, Response, status
-import httpx
 
 from models.entrada import Entrada, EntradaList, EntradaNew, EntradaUpdate
+from models.wiki import Wiki
+from models.comentario import ComentarioList
 
 load_dotenv()
 MONGO_URL = os.getenv("MONGO_URL")
@@ -70,8 +71,6 @@ def update_entry(id: str, entrada: EntradaUpdate):
     if not ObjectId.is_valid(id):
         raise HTTPException(status_code=400, detail=f"ID {id} no tiene formato valido")
     
-    print(entrada)
-    
     if entrada.nombre and entradas.find_one({"nombre": entrada.nombre}):
         raise HTTPException(status_code=400, detail= f"Ya existe una entrada con el nombre {entrada.nombre}")
     
@@ -99,69 +98,60 @@ def delete_entry(id: str):
     raise HTTPException(status_code=404, detail=f"Entrada con ID {id} no encontrada")
 
 # DELETE /entradas/ : JSON {idWiki:"xxxxxxxxx"} Borra las entradas asociadas a una wiki
-@entradas_router.delete("/wikis/{id}")
-def delete_entries_byWiki(id: str):
-    if not ObjectId.is_valid(id):
-        raise HTTPException(status_code=400, detail=f"ID {id} no tiene formato valido")
+@entradas_router.delete("/")
+def delete_entries_by_wiki(idWiki: str):
+    if not ObjectId.is_valid(idWiki):
+        raise HTTPException(status_code=400, detail=f"ID {idWiki} no tiene formato valido")
     
-    with httpx.Client() as client:
-        try:
-            for entrada in entradas.find({"idWiki": id}):
-                # eliminamos las versiones de la entrada
-                # client.delete(f"http://localhost:{os.getenv("SERVICE_ENTRADAS_PORT")}/versiones", json={"idEntrada": entrada.id})
-                # eliminamos la entrada
-                entrada = entrada["_id"]
-                print(f"http://localhost:{os.getenv('SERVICE_ENTRADAS_PORT')}/entradas/{entrada}")
-                client.delete(f"http://localhost:{os.getenv('SERVICE_ENTRADAS_PORT')}/entradas/{entrada}")
-        except Exception as e:
-            raise HTTPException(status_code=400, detail= f"Error al buscar las entradas: {str(e)}")
+    entradasServiceName = os.getenv("ENDPOINT_ENTRADAS")
+    entradasServicePort = os.getenv("SERVICE_ENTRADAS_PORT")
+    
+    try:
+        for entrada in entradas.find({"idWiki": idWiki}):
+            id = entrada["_id"]
+            # eliminamos las versiones de la entrada
+            requests.delete(f"http://{entradasServiceName}:{entradasServicePort}/versiones?idEntrada={id}")
+            # eliminamos la entrada
+            requests.delete(f"http://{entradasServiceName}:{entradasServicePort}/entradas/{id}")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail= f"Error al buscar las entradas: {str(e)}")
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
-# # GET /entradas/<id>/wikis
-# @entradas_router.route("/<id>/wiki", methods=['GET'])
-# def get_wikis_for_entry(id):
-#     try:
-#         entrada = entradas.find_one({"_id": ObjectId(id)})
-#     except Exception as e:
-#         raise HTTPException(status_code=400, detail= f"Error al buscar la entrada: {str(e)}"}), 400
-#     if entrada:
-#         wiki_id = entrada["idWiki"]
-#         wikiServiceName = os.getenv("ENDPOINT_WIKIS")
-#         wikiServicePort = os.getenv("SERVICE_WIKIS_PORT")
-#         if current_app.debug:
-#             wiki_raw = requests.get(f"http://localhost:{wikiServicePort}/wikis/{wiki_id}") # solo dev
-#         else:
-#             wiki_raw = requests.get(f"http://{wikiServiceName}:{wikiServicePort}/wikis/{wiki_id}")
-
-#         if wiki_raw.status_code == 200:
-#             return jsonify(wiki_raw.json()), 200
-#         else:
-#             raise HTTPException(status_code=400, detail="Error al obtener la wiki de la entrada"}), 400
-#     else:
-#         raise HTTPException(status_code=400, detail= "Entrada no encontrada"}), 404
-
-# # GET /entradas/<id>/comentarios
-# @entradas_router.route("/<id>/comentarios", methods=['GET'])
-# def get_comentarios_for_entry(id):
-#     try:
-#         entrada = entradas.find_one({"_id": ObjectId(id)})
-#         if entrada:
-#             slug = entrada["slug"]
-#             # buscar todos los comentarios de la entrada
-#             comentariosServiceName = os.getenv("ENDPOINT_COMENTARIOS")
-#             comentariosPort = os.getenv("SERVICE_COMENTARIOS_PORT")
-
-#             if current_app.debug:
-#                 url = f"http://localhost:{comentariosPort}/comentarios?idEntrada={id}"
-#             else:
-#                 url = f"http://{comentariosServiceName}:{comentariosPort}/comentarios?idEntrada={id}"
-
-#             comentarios_raw = requests.get(url)
-#             if comentarios_raw.status_code == 200:
-#                 return jsonify(comentarios_raw.json()), 200
-#             else:
-#                 raise HTTPException(status_code=400, detail="Error al obtener los comentarios de la entrada"}), 400
-#         else:
-#             raise HTTPException(status_code=400, detail= "Entrada no encontrada"}), 404
-#     except Exception as e:
-#         raise HTTPException(status_code=400, detail= f"Error al buscar la entrada: {str(e)}"}), 400
+# GET /entradas/<id>/wikis
+@entradas_router.get("/{id}/wiki", response_model=Wiki)
+def get_wiki_of_entry(id: str):
+    try:
+        entrada = entradas.find_one({"_id": ObjectId(id)})
+    except Exception as e:
+        raise HTTPException(status_code=400, detail= f"Error al buscar la entrada: {str(e)}")
+    if not entrada:
+        raise HTTPException(status_code=404, detail= "Entrada no encontrada")
+    
+    idWiki = entrada["idWiki"]
+    wikiServiceName = os.getenv("ENDPOINT_WIKIS")
+    wikiServicePort = os.getenv("SERVICE_WIKIS_PORT")
+    
+    try:
+        wiki = requests.get(f"http://{wikiServiceName}:{wikiServicePort}/v2/wikis/{idWiki}").json()
+        return wiki
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error al buscar la wiki: {str(e)}")
+    
+# GET /entradas/<id>/comentarios
+@entradas_router.get("/{id}/comentarios", response_model=ComentarioList)
+def get_comentarios_for_entry(id: str):
+    try:
+        entrada = entradas.find_one({"_id": ObjectId(id)})
+    except Exception as e:
+        raise HTTPException(status_code=400, detail= f"Error al buscar la entrada: {str(e)}")
+    if not entrada:
+        raise HTTPException(status_code=404, detail= "Entrada no encontrada")
+    
+    comentariosServiceName = os.getenv("ENDPOINT_COMENTARIOS")
+    comentariosPort = os.getenv("SERVICE_COMENTARIOS_PORT")
+    
+    try:
+        comentarios = requests.get(f"http://{comentariosServiceName}:{comentariosPort}/comentarios?idEntrada={id}").json()
+        return comentarios
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error al buscar los comentarios: {str(e)}")

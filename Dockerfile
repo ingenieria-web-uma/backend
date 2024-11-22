@@ -32,4 +32,5 @@ COPY ${MODEL_PATH} .
 ARG SERVICE_PORT
 EXPOSE ${SERVICE_PORT}
 
-CMD ["fastapi", "dev", "app.py"]
+#CMD ["fastapi", "dev", "app.py"]
+CMD ["python", "app.py"]

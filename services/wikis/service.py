@@ -35,7 +35,7 @@ def get_wikis(filtro: WikiFilter = Depends()):
 
 #GET /wikis/<id>
 
-@wikis_bp.get("/{id}")
+@wikis_bp.get("/{id}", response_model=Wiki)
 def get_wikis_byId(id: str):
     try:
         resultado = wikis.find_one({"_id":ObjectId(id)})

@@ -3,157 +3,127 @@ import os
 
 import pymongo
 import requests
-from bson import json_util
 from bson.objectid import ObjectId
 from dotenv import load_dotenv
-from flask import Blueprint, current_app, jsonify, request
+from fastapi import APIRouter, HTTPException, Response, status
 from datetime import datetime
+
+from models.version import Version, VersionList, VersionNew, VersionUpdate
 
 load_dotenv()
 MONGO_URL = os.getenv("MONGO_URL")
 
-versiones_bp = Blueprint('versiones_bp', __name__)
+versiones_router = APIRouter(
+    prefix="/versiones",
+    tags=['versiones']
+)
 
 # Configuración de MongoDB
 client = pymongo.MongoClient(MONGO_URL)
-db = client.laWiki
+db = client.laWikiv2
 versiones = db.versiones
 
 # GET /versiones
-@versiones_bp.route("/", methods=['GET'])
-def get_versions():
-    data = request.args
+@versiones_router.get("/", response_model=VersionList)
+def get_versions(
+    idUsuario: str = None,
+    idEntrada: str = None,
+    contenido: str = None,
+    fechaEdicion: datetime = None
+):
     query = {}
-
-    try:
-        if data:
-            if data.get("idEntrada"):
-                query["idEntrada"] = ObjectId(data.get("idEntrada"))
-            if data.get("idUsuario"):
-                query["idUsuario"] = ObjectId(data.get("idUsuario"))
-            if data.get("contenido"):
-                query["contenido"] = {"$regex": data.get("contenido"), "$options": "i"}
-            if data.get("fechaEdicion"):
-                query["fechaEdicion"] = {"$regex": data.get("fechaEdicion"), "$options": "i"}
-    except Exception as e:
-        return jsonify({"error": f"Datos no válidos. {e}"}), 400
-
-    versiones_data = versiones.find(query)
-    versiones_json = json.loads(json_util.dumps(versiones_data))
-    return jsonify(versiones_json), 200
+    
+    if idUsuario:
+        if ObjectId.is_valid(idUsuario):
+            query["idUsuario"] = ObjectId(idUsuario)
+        else:
+            raise HTTPException(status_code=400, detail=f"ID de usuario {idUsuario} no tiene formato valido")
+    if idEntrada:
+        if ObjectId.is_valid(idEntrada):
+            query["idEntrada"] = ObjectId(idEntrada)
+        else:
+            raise HTTPException(status_code=400, detail=f"ID de entrada {idEntrada} no tiene formato valido")
+    if contenido:
+        query["contenido"] = {"$regex": contenido, "$options": "i"}
+    if fechaEdicion:
+        query["fechaEdicion"] = {"$regex": fechaEdicion, "$options": "i"}
+    
+    return VersionList(versiones=versiones.find(query))
 
 # GET /versiones/<id>
-@versiones_bp.route("/<id>", methods=['GET'])
-def get_versions_byId(id):
-    query = {}
-
+@versiones_router.get("/{id}", response_model=Version)
+def get_versions_byId(id: str):
     try:
-        query["_id"] = ObjectId(id)
+        version = versiones.find_one({"_id": ObjectId(id)})
+        if version:
+            return version
+        else:
+            raise HTTPException(status_code=404, detail= "Version no encontrada")
     except Exception as e:
-        return jsonify({"error": "Id de version no valido"}), 400
-
-    versiones_data = versiones.find_one(query)
-    if versiones_data:
-        versiones_json = json.loads(json_util.dumps(versiones_data))
-        return jsonify(versiones_json), 200
-    else:
-        return jsonify({"error": f"Version con id {id} no encontrada"}), 404
+        raise HTTPException(status_code=400, detail= f"Error al buscar la version: {str(e)}")
 
 # POST /versiones
-@versiones_bp.route("/", methods=['POST'])
-def create_version():
-    datos = request.json
+@versiones_router.post("/", response_model=Version, status_code=status.HTTP_201_CREATED)
+def create_version(version: VersionNew):
+    model = version.model_dump(by_alias=True)
     try:
-        datos["idUsuario"] = ObjectId(datos["idUsuario"])
-        datos["idEntrada"] = ObjectId(datos["idEntrada"])
-        datos["contenido"] = datos["contenido"]
-        datos["fechaEdicion"] = datetime.now()
+        model["idUsuario"] = ObjectId(version.idUsuario)
+        model["idEntrada"] = ObjectId(version.idEntrada)
     except Exception as e:
-        return jsonify({"error": f"Datos no válidos. {e}"}), 400
-
-    try:
-        response = versiones.insert_one(datos)
-        if response:
-            return jsonify({"message": "Version creada correctamente"}), 201
-    except Exception as e:
-        return jsonify({"error": f"Error al insertar la version: {e}"}), 400
-
-    return jsonify({"message": "Version creada correctamente"}), 201
+        raise HTTPException(status_code=400, detail=f"Fallo al convertir IDs: {str(e)}")
+    model["fechaEdicion"] = version.fechaEdicion
+    result = versiones.insert_one(model)
+    return versiones.find_one({"_id": result.inserted_id})
 
 # PUT /versiones/<id>
-@versiones_bp.route("/<id>", methods=['PUT'])
-def update_version(id):
-    datos = request.json
-    if not datos:
-        return jsonify({"error": "Datos no válidos"}), 400
-
+@versiones_router.put("/{id}", response_model=Version)
+def update_version(id: str, version: VersionUpdate):
+    if not ObjectId.is_valid(id):
+        raise HTTPException(status_code=400, detail=f"ID {id} no tiene formato valido")
+    
+    model = version.model_dump(by_alias=True, exclude_none=True)
+    if not model:
+        raise HTTPException(status_code=400, detail="Debe incluir alguna actualizacion")
+    
     try:
-        filtro = {"_id": ObjectId(id)}
-        versiones.find_one(filtro)
+        if model["idUsuario"]:
+            model["idUsuario"] = ObjectId(version.idUsuario)
+        if model["idEntrada"]:
+            model["idEntrada"] = ObjectId(version.idEntrada)
     except Exception as e:
-        return jsonify({"error": f"Version no encontrada"}), 404
-
-    try:
-        if datos.get("idUsuario"):
-            datos["idUsuario"] = ObjectId(datos["idUsuario"])
-        if datos.get("idEntrada"):
-            datos["idEntrada"] = ObjectId(datos["idEntrada"])
-        if datos.get("contenido"):
-            datos["contenido"] = datos["contenido"]
-    except Exception as e:
-        return jsonify({"error": f"Datos no válidos. {e}"}), 400
-
-    if datos:
-        datos["fechaEdicion"] = datetime.now()
-
-    try:
-        versiones.update_one(filtro, {"$set": datos})
-        return jsonify({"message": f"Version con id {id} actualizada correctamente"}), 200
-    except Exception as e:
-        return jsonify({"error": f"Error al actualizar la version: {e}"}), 400
+        raise HTTPException(status_code=400, detail=f"Fallo al convertir IDs: {str(e)}")
+    model["fechaEdicion"] = version.fechaEdicion
+    result = versiones.find_one_and_update(
+        {"_id": ObjectId(id)},
+        {"$set": model},
+        return_document=pymongo.ReturnDocument.AFTER,
+    )
+    if result:
+        return result
+    else:
+        raise HTTPException(status_code=404, detail=f"Version con ID {id} no encontrada")
 
 # DELETE /versiones/<id>
-@versiones_bp.route("/<id>", methods=['DELETE'])
-def delete_version(id):
-    try:
-        filtro = {"_id": ObjectId(id)}
-        version = versiones.find_one(filtro)
-        if version:
-            versiones.delete_one(filtro)
-            return jsonify({"message": f"Versión con ID {id} eliminada correctamente"}), 200
-        else:
-            return jsonify({"error": "Versión no encontrada"}), 404
-    except Exception as e:
-        return jsonify({"error": f"Error al eliminar la versión: {str(e)}"}), 400
+@versiones_router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_version(id: str):
+    if not ObjectId.is_valid(id):
+        raise HTTPException(status_code=400, detail=f"ID {id} no tiene formato válido")
+    
+    result = versiones.delete_one({"_id": ObjectId(id)})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail=f"Versión con ID {id} no encontrada")
+    
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
 
 # DELETE /versiones/
-@versiones_bp.route("/", methods=['DELETE'])
-def delete_versions_byEntradaId():
-    body = request.json
-    if not body:
-        return jsonify({"error": "Datos no válidos"}), 400
-
-    try:
-        idEntrada = body["idEntrada"]
-    except Exception as e:
-        return jsonify({"error": f"Id de entrada no válido. {e}"}), 400
-
-    idVersionesABorrar = []
-    try:
-        for versionByEntrada in versiones.find({"idEntrada": ObjectId(idEntrada)}):
-            idV = json.loads(json_util.dumps(versionByEntrada))["_id"]["$oid"]
-            idVersionesABorrar.append(idV)
-        print(idVersionesABorrar)
-
-        if len(idVersionesABorrar) > 0:
-            with current_app.test_client() as client:
-                for idVersion in idVersionesABorrar:
-                    if current_app.debug:
-                        requests.delete(f"http://localhost:{os.getenv("SERVICE_ENTRADAS_PORT")}/entradas", json={"idVersion": idVersion})
-                    else:
-                        requests.delete(f"http://{os.getenv("ENDPOINT_ENTRADAS")}:{os.getenv("SERVICE_ENTRADAS_PORT")}/entradas", json={"idVersion": idVersion})
-                    client.delete(f"/versiones/{idVersion}")
-    except Exception as e:
-        return jsonify({"error": f"Error al buscar las versiones: {str(e)}"}), 400
-
-    return jsonify({"message": f"Se han eliminado las versiones asociadas a la entrada con ID {idEntrada}"}), 200
+@versiones_router.delete("/", status_code=status.HTTP_204_NO_CONTENT)
+def delete_versions_by_entradaId(idEntrada: str):
+    if not ObjectId.is_valid(idEntrada):
+        raise HTTPException(status_code=400, detail=f"ID de entrada {idEntrada} no tiene formato válido")
+    
+    result = versiones.delete_many({"idEntrada": ObjectId(idEntrada)})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail=f"No se encontraron versiones con idEntrada {idEntrada}")
+    
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

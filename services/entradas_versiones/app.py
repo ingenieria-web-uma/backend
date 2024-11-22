@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 
 from entradas import entradas_router
-#from versiones import versiones_router
+from versiones import versiones_router
 
 load_dotenv()
 
@@ -13,7 +13,7 @@ app = FastAPI()
 
 # Registrar las rutas
 app.include_router(entradas_router)
-#app.include_router(versiones_router)
+app.include_router(versiones_router)
 
 @app.get("/")
 def main_route():

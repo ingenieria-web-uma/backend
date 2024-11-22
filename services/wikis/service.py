@@ -1,21 +1,21 @@
 import json
 import os
+from typing import Optional
 
 import pymongo
 import requests
 from bson import json_util
 from bson.objectid import ObjectId
 from dotenv import load_dotenv
-from fastapi import APIRouter, HTTPException, UploadFile
-from models.wiki import WikiNew, WikiUpdate, WikiList, Wiki
-from typing import Optional
+from fastapi import APIRouter, Depends, HTTPException, UploadFile
 
+from models.wiki import Wiki, WikiFilter, WikiList, WikiNew, WikiUpdate
 
 load_dotenv()
 MONGO_URL = os.getenv("MONGO_URL")
 
 wikis_bp = APIRouter(
-    prefix="/wikis",
+    prefix="/v2/wikis",
     tags=['wikis']
 )
 
@@ -25,16 +25,13 @@ wikis = db.wikis
 
 #GET /wikis/
 
-@wikis_bp.get("/", response_model=WikiList)
-def get_wikis(nombre: Optional[str] = None):
-    query = {}
-    if nombre:
-        query["nombre"] = {"$regex": nombre, "$options": "i"}
+@wikis_bp.get("/")
+def get_wikis(filtro: WikiFilter = Depends()):
     try:
-        resultado = wikis.find(query)
-        return WikiList(wikis=resultado)
+        wikisRes = wikis.find(filtro.model_dump(exclude_none=True))
+        return WikiList(wikis=[wiki for wiki in wikisRes]).model_dump()
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Error al buscar las wikis: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Error al obtener las wikis, {e}")
 
 #GET /wikis/<id>
 
@@ -64,20 +61,17 @@ def create_wiki(wiki: WikiNew):
 #PUT /wikis/<id>
 
 @wikis_bp.put("/{id}")
-def update_wiki(id: str, wiki: WikiUpdate):
-    wiki_dump = wiki.model_dump(exclude_unset=True)
-    wiki_dump = {k: v for k, v in wiki_dump.items() if v is not None}
-    if not wiki_dump:
-        raise HTTPException(status_code=400, detail="No se han recibido datos para actualizar")
-    result = wikis.update_one({"_id": ObjectId(id)}, {"$set": wiki_dump})
-    if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Wiki no encontrada")
-    wiki = wikis.find_one({"_id": ObjectId(id)})
-    if wiki:
-        wiki["_id"] = str(wiki["_id"])
-        return wiki
-    else:
-        raise HTTPException(status_code=404, detail="Wiki no encontrada")
+def update_wiki(id: str, wikiUpdate: WikiUpdate):
+    try:
+        dataFormateada = {"$set": wikiUpdate.to_mongo_dict(exclude_none=True)}
+        respuesta = wikis.find_one_and_update({"_id":ObjectId(id)}, dataFormateada, return_document=pymongo.ReturnDocument.AFTER)
+        if respuesta is None:
+            raise HTTPException(status_code=404, detail="Wiki no encontrada")
+        return Wiki(**respuesta).model_dump()
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error al actualizar la wiki: {str(e)}")
 
 #DELETE /wikis/<id>
 
@@ -85,11 +79,13 @@ def update_wiki(id: str, wiki: WikiUpdate):
 def delete_wiki(id: str):
     try:
         borrado = wikis.delete_one({"_id":ObjectId(id)})
+        if borrado.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Wiki no encontrada")
+        raise HTTPException(status_code=200, detail="Wiki borrada")
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error al borrar la wiki: {str(e)}")
-    if borrado.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Wiki no encontrada")
-    return "Wiki borrada con éxito"
 
 #GET /wikis/<id>/entradas
 

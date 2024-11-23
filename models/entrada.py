@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from pydantic import BaseModel, Field, root_validator
+from pydantic import BaseModel, Field, model_validator
 from pydantic_mongo import PydanticObjectId
 
 from models.baseMongo import MongoBase
@@ -21,8 +21,8 @@ class EntradaUpdate(BaseModel):
     idVersionActual: Optional[PydanticObjectId] = None
     nombre: Optional[str] = None
     slug: Optional[str] = None
-    
-    @root_validator(pre=True)
+
+    @model_validator(mode='before')
     def generar_slug(cls, valores):
         if "slug" in valores:
             valores["slug"] = None
@@ -39,7 +39,7 @@ class EntradaNew(BaseModel):
     nombre: str
     slug: Optional[str] = None
 
-    @root_validator(pre=True)
+    @model_validator(mode='before')
     def generar_slug(cls, valores):
         if 'nombre' in valores:
             valores['slug'] = valores['nombre'].lower().replace(" ", "-")

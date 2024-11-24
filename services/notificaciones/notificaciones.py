@@ -23,7 +23,6 @@ notificaciones_bp = APIRouter(
 client = pymongo.MongoClient(MONGO_URL)
 db = client.laWikiv2
 notificaciones = db.notificaciones
-background_tasks = BackgroundTasks()
 
 SERVICE_USUARIOS_PORT = os.getenv("SERVICE_USUARIOS_PORT")
 ENDPOINT_USUARIOS = os.getenv("ENDPOINT_USUARIOS")
@@ -42,7 +41,6 @@ USER_SERVICE_URL = f"http://localhost:{SERVICE_USUARIOS_PORT}/{ENDPOINT_USUARIOS
 
 @notificaciones_bp.post("/")
 async def create_notification(notification: NotificationNew):
-    # Convertir la notificación a un diccionario para MongoDB
 
     # Buscar al usuario en la colección de usuarios
     user = await get_user(notification.user_id)
@@ -62,7 +60,7 @@ async def create_notification(notification: NotificationNew):
         email=recipient_email
         body=notification.message
         email = EmailSchema(email=email, subject=subject, body=body)
-        result = await send_email(background_tasks, email)
+        result = await send_email(email)
         notificaciones.insert_one(notification.model_dump())
         return {"message": "Correo enviado con éxito y notificación creada"}
     except Exception as e:

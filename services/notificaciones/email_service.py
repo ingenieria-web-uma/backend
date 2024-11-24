@@ -4,38 +4,36 @@ from fastapi import FastAPI, BackgroundTasks, HTTPException
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
 from pydantic import BaseModel, EmailStr
 from models.email import EmailSchema, EmailSchemaNew
+from mailjet_rest import Client
 
 load_dotenv()
 
-# Configuración del correo
-conf = ConnectionConfig(
-    MAIL_USERNAME=os.getenv("MAIL_EMAIL"),
-    MAIL_PASSWORD=os.getenv("MAIL_PASSWORD"),
-    MAIL_FROM=os.getenv("MAIL_EMAIL"),
-    MAIL_PORT=587,
-    MAIL_SERVER = "smtp.gmail.com",
-    MAIL_STARTTLS = False,
-    MAIL_SSL_TLS = True,
-    USE_CREDENTIALS = True,
-    VALIDATE_CERTS = True  
-)
+MAILJET_API_KEY = os.getenv("MAILJET_API_KEY")
+MAILJET_API_SECRET = os.getenv("MAILJET_API_SECRET")
+MAIL_FROM = os.getenv("MAIL_EMAIL")
+
+if not all([MAILJET_API_KEY, MAILJET_API_SECRET, MAIL_FROM]):
+    raise ValueError("Por favor, define las variables de entorno MAILJET_API_KEY, MAILJET_API_SECRET y MAIL_EMAIL.")
 
 app = FastAPI()
 
-async def send_email(background_tasks: BackgroundTasks, email: EmailSchema):
-
-    message = MessageSchema(
-        subject=email.subject,
-        recipients=[email.email],  # Lista de destinatarios
-        body= email.body,
-        subtype="plain"  # "plain" o "html"
-    )
-
-    fm = FastMail(conf)
-    try:
-        background_tasks.add_task(fm.send_message, message)
-        return {"Correo enviado correctamente"}
-    except ConnectionError as e:
-        raise HTTPException(status_code=500, detail=f"Error de conexión: {str(e)}")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error enviando correo: {str(e)}")
+async def send_email( email: EmailSchema):
+    mailjet = Client(auth=(MAILJET_API_KEY, MAILJET_API_SECRET), version='v3') 
+    data = {
+  'FromEmail': MAIL_FROM,
+  'FromName': "LaWiki",
+  'Recipients': [
+    {
+      "Email": email.email,
+      "Name": ""
+    }
+  ],
+  'Subject': email.subject,
+  'Text-part': email.body,
+  'Html-part': ""
+}
+        # Enviar correo directamente para obtener la respuesta
+    result = mailjet.send.create(data=data)
+    print (result.status_code)
+    print (result.json())
+    return "Correo enviado?"

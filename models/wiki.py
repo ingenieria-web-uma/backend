@@ -1,16 +1,15 @@
-from typing import Dict, List, Optional
+from typing import Annotated, Dict, List, Optional
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from pydantic_mongo import PydanticObjectId
-from pymongo.common import validate
 
 from models.baseMongo import MongoBase
 
 
 class WikiFilter(BaseModel):
-    nombre: Optional[Dict] = None
+    nombre: Annotated[Optional[Dict], Field(validate_default=True)] = None
 
-    @validator("nombre", always=True)
+    @field_validator("nombre")
     def make_regex(cls, v):
         if v is not None:
             return {"$regex": v, "$options": "i"}  # Convertir en regex si no es None

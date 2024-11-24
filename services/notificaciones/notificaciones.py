@@ -2,14 +2,14 @@ import httpx
 import json
 import os
 
-from fastapi import APIRouter, HTTPException, Response, status
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Response, status
 import pymongo
 import requests
 from bson import json_util
 from bson.objectid import ObjectId
 from dotenv import load_dotenv
 from models.notificacion import Notification, NotificationList, NotificationNew, NotificationUpdate
-from services.notificaciones.email_service import EmailService
+from email_service import send_email, EmailSchema
 
 load_dotenv()
 MONGO_URL = os.getenv("MONGO_URL")
@@ -23,6 +23,7 @@ notificaciones_bp = APIRouter(
 client = pymongo.MongoClient(MONGO_URL)
 db = client.laWikiv2
 notificaciones = db.notificaciones
+background_tasks = BackgroundTasks()
 
 SERVICE_USUARIOS_PORT = os.getenv("SERVICE_USUARIOS_PORT")
 ENDPOINT_USUARIOS = os.getenv("ENDPOINT_USUARIOS")
@@ -42,7 +43,6 @@ USER_SERVICE_URL = f"http://localhost:{SERVICE_USUARIOS_PORT}/{ENDPOINT_USUARIOS
 @notificaciones_bp.post("/")
 async def create_notification(notification: NotificationNew):
     # Convertir la notificación a un diccionario para MongoDB
-    print(notification)
 
     # Buscar al usuario en la colección de usuarios
     user = await get_user(notification.user_id)
@@ -57,13 +57,12 @@ async def create_notification(notification: NotificationNew):
     recipient_email = user["email"]
 
     # Enviar el correo
-    body = "Este es el contenido de la notificación."
     try:
-        await EmailService.send_email(
-            subject="Att: El equipo de laWiki",
-            recipient=recipient_email,
-            body=body
-        )
+        subject="Att: El equipo de laWiki"
+        email=recipient_email
+        body=notification.message
+        email = EmailSchema(email=email, subject=subject, body=body)
+        result = await send_email(background_tasks, email)
         notificaciones.insert_one(notification.model_dump())
         return {"message": "Correo enviado con éxito y notificación creada"}
     except Exception as e:

@@ -1,11 +1,8 @@
 import httpx
-import json
 import os
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Response, status
+from fastapi import APIRouter, HTTPException, Response, status
 import pymongo
-import requests
-from bson import json_util
 from bson.objectid import ObjectId
 from dotenv import load_dotenv
 from models.notificacion import Notification, NotificationList, NotificationNew, NotificationUpdate
@@ -72,15 +69,15 @@ async def create_notification(notification: NotificationNew):
 async def get_all_notifications():
     # Obtener todas las notificaciones de la colección sin filtros
     notifications = list(notificaciones.find())  # Obtiene todas las notificaciones
-    
+
     # Si no hay notificaciones, lanzar un error 404
     if not notifications:
         raise HTTPException(status_code=404, detail="No se encontraron notificaciones")
-    
+
     # Convertir ObjectId a string en cada notificación
     for notification in notifications:
         notification["_id"] = str(notification["_id"])  # Convertir ObjectId a string
-    
+
     # Crear una lista de objetos Notification a partir de los resultados
     return NotificationList(notifications=[Notification(**notif) for notif in notifications])
 
@@ -112,7 +109,7 @@ async def get_notifications(user_id: str):
 
     # Retornar la lista de notificaciones
     return NotificationList(notifications=[Notification(**notification) for notification in notifications])
-    
+
 # Actualizar Notificación (PUT)
 @notificaciones_bp.put("/{notification_id}", response_model=Notification)
 async def update_notification(notification_id: str, update_data: NotificationUpdate):
@@ -122,7 +119,7 @@ async def update_notification(notification_id: str, update_data: NotificationUpd
     )
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Notificación no encontrada")
-    
+
     updated_notification = notificaciones.find_one({"_id": ObjectId(notification_id)})
     updated_notification["_id"] = str(updated_notification["_id"])  # Convertir ObjectId a string
     return Notification(**updated_notification)

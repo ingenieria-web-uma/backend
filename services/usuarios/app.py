@@ -18,7 +18,7 @@ def main_route():
 
 # Ejecutar la aplicación
 if __name__ == "__main__":
-        puerto = os.getenv("SERVICE_USUARIOS_PORT")
-        if puerto:
-            puerto = int(puerto)
-            uvicorn.run("services.usuarios.app:app", host="0.0.0.0", port=puerto, reload=True)
+    puerto = os.getenv("SERVICE_USUARIOS_PORT")
+    if puerto:
+        puerto = int(puerto)
+        uvicorn.run("services.usuarios.app:app", host="0.0.0.0", port=puerto, reload=True)

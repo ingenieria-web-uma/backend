@@ -1,13 +1,10 @@
-import json
 import os
-from typing import Optional
 
 import pymongo
 import requests
-from bson import json_util
 from bson.objectid import ObjectId
 from dotenv import load_dotenv
-from fastapi import APIRouter, Depends, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, HTTPException
 
 from models.wiki import Wiki, WikiFilter, WikiList, WikiNew, WikiUpdate
 
@@ -46,7 +43,7 @@ def get_wikis_byId(id: str):
             raise HTTPException(status_code=404, detail="Wiki no encontrada")
     except Exception as e:
         raise HTTPException(status_code=400, detail="ID inválido")
-    
+
 #POST /wikis/
 
 @wikis_bp.post("/", response_model=Wiki)

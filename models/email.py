@@ -1,11 +1,4 @@
-from datetime import datetime
-from typing import List, Optional
-
-from fastapi import Query
-from pydantic import BaseModel, EmailStr, Field, validator
-from pydantic_mongo import PydanticObjectId
-
-from models.baseMongo import MongoBase
+from pydantic import BaseModel, EmailStr
 
 class EmailSchema(BaseModel):
     email: EmailStr

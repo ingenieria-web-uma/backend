@@ -78,7 +78,7 @@ def get_mapas_por_query_o_coords(q: str = None, lat: float = None, lon: float = 
 def get_mapas_por_entrada(idEntrada: str):
     mapas_cursor = mapas.find({"idEntrada": ObjectId(idEntrada)})
     mapas_entrada = [MapInfo(**m) for m in mapas_cursor]
-    return MapListResponse(idEntrada=idEntrada, mapas=mapas_entrada)
+    return MapListResponse(mapas=mapas_entrada)
 
 
 @mapas_bp.get("/{idMapa}/entrada/{idEntrada}", response_model=MapInfo)

@@ -1,8 +1,6 @@
-import json
 import os
 
 import pymongo
-import requests
 from bson.objectid import ObjectId
 from dotenv import load_dotenv
 from fastapi import APIRouter, HTTPException, Response, status
@@ -32,7 +30,7 @@ def get_versions(
     fechaEdicion: datetime = None
 ):
     query = {}
-    
+
     if idUsuario:
         if ObjectId.is_valid(idUsuario):
             query["idUsuario"] = ObjectId(idUsuario)
@@ -47,7 +45,7 @@ def get_versions(
         query["contenido"] = {"$regex": contenido, "$options": "i"}
     if fechaEdicion:
         query["fechaEdicion"] = {"$regex": fechaEdicion, "$options": "i"}
-    
+
     return VersionList(versiones=versiones.find(query))
 
 # GET /versiones/<id>
@@ -80,11 +78,11 @@ def create_version(version: VersionNew):
 def update_version(id: str, version: VersionUpdate):
     if not ObjectId.is_valid(id):
         raise HTTPException(status_code=400, detail=f"ID {id} no tiene formato valido")
-    
+
     model = version.model_dump(by_alias=True, exclude_none=True)
     if not model:
         raise HTTPException(status_code=400, detail="Debe incluir alguna actualizacion")
-    
+
     try:
         if model["idUsuario"]:
             model["idUsuario"] = ObjectId(version.idUsuario)
@@ -108,11 +106,11 @@ def update_version(id: str, version: VersionUpdate):
 def delete_version(id: str):
     if not ObjectId.is_valid(id):
         raise HTTPException(status_code=400, detail=f"ID {id} no tiene formato válido")
-    
+
     result = versiones.delete_one({"_id": ObjectId(id)})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail=f"Versión con ID {id} no encontrada")
-    
+
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -121,9 +119,9 @@ def delete_version(id: str):
 def delete_versions_by_entradaId(idEntrada: str):
     if not ObjectId.is_valid(idEntrada):
         raise HTTPException(status_code=400, detail=f"ID de entrada {idEntrada} no tiene formato válido")
-    
+
     result = versiones.delete_many({"idEntrada": ObjectId(idEntrada)})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail=f"No se encontraron versiones con idEntrada {idEntrada}")
-    
+
     return Response(status_code=status.HTTP_204_NO_CONTENT)

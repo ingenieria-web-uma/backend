@@ -1,9 +1,7 @@
 import os
 from dotenv import load_dotenv
-from fastapi import FastAPI, BackgroundTasks, HTTPException
-from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
-from pydantic import BaseModel, EmailStr
-from models.email import EmailSchema, EmailSchemaNew
+from fastapi import FastAPI
+from models.email import EmailSchema
 from mailjet_rest import Client
 
 load_dotenv()
@@ -18,7 +16,7 @@ if not all([MAILJET_API_KEY, MAILJET_API_SECRET, MAIL_FROM]):
 app = FastAPI()
 
 async def send_email( email: EmailSchema):
-    mailjet = Client(auth=(MAILJET_API_KEY, MAILJET_API_SECRET), version='v3') 
+    mailjet = Client(auth=(MAILJET_API_KEY, MAILJET_API_SECRET), version='v3')
     data = {
   'FromEmail': MAIL_FROM,
   'FromName': "LaWiki",

@@ -1,7 +1,6 @@
 import json
 from bson import ObjectId
-from fastapi import APIRouter, HTTPException, status
-from pydantic import BaseModel
+from fastapi import APIRouter, HTTPException
 from pymongo import MongoClient
 from dotenv import load_dotenv
 from models.user import User, UserList, UserNew, UserUpdate
@@ -32,13 +31,13 @@ def get_users(name: Optional[str] = None, email: Optional[str] = None, role: Opt
         query["email"] = {"$regex": email, "$options": "i"}
     if role:
         query["role"] = {"$regex": role, "$options": "i"}
-    
+
     try:
         users_data = usuarios.find(query).to_list(1000)
         return UserList(users=users_data)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error al buscar los usuarios: {str(e)}")
-    
+
 #GET /usuarios/<id>
 @usuarios_router.get("/{id}")
 def get_user_by_id(id: str):
@@ -51,7 +50,7 @@ def get_user_by_id(id: str):
             raise HTTPException(status_code=404, detail="Usuario no encontrado")
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error al buscar el usuario: {str(e)}")
-    
+
 #POST /usuarios
 @usuarios_router.post("/", response_model=User)
 def create_user(user: UserNew):
@@ -82,7 +81,7 @@ def update_user(id: str, user: UserUpdate):
             raise HTTPException(status_code=404, detail="Usuario no encontrado")
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error al actualizar el usuario: {str(e)}")
-    
+
 #DELETE /usuarios/<id>
 @usuarios_router.delete("/{id}")
 def delete_user(id: str):
@@ -93,5 +92,5 @@ def delete_user(id: str):
         return {"message": "Usuario eliminado correctamente"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error al eliminar el usuario: {str(e)}")
-    
+
 

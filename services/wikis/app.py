@@ -3,6 +3,7 @@ import os
 import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from services.wikis.service import wikis_bp
 
 load_dotenv()
@@ -12,6 +13,13 @@ app = FastAPI()
 # Registrar los microservicios como Blueprints
 app.include_router(wikis_bp)
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/")
 def main_route():

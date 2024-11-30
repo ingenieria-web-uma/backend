@@ -2,6 +2,7 @@ import os
 
 import uvicorn
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from notificaciones import notificaciones_bp
 
@@ -12,6 +13,13 @@ app = FastAPI()
 # Registrar los microservicios como Blueprints
 app.include_router(notificaciones_bp)
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Ejecutar la aplicación FastAPI
 if __name__ == "__main__":

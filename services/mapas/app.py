@@ -12,9 +12,11 @@ app = FastAPI()
 # Registrar los microservicios como Blueprints
 app.include_router(mapas_bp)
 
+
 @app.route("/")
 def main_route():
     return f"Servicio de mapas corriendo en el puerto {os.getenv('SERVICE_MAPAS_PORT')}"
+
 
 # Ejecutar la aplicación FastAPI
 if __name__ == "__main__":

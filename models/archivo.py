@@ -5,17 +5,20 @@ from pydantic_mongo import PydanticObjectId
 
 
 class Archivo(BaseModel):
-    id: PydanticObjectId = Field(alias='_id')
+    id: PydanticObjectId = Field(alias="_id")
     nombre: str
     url: str
+
 
 class ArchivoNew(BaseModel):
     nombre: str
     url: str
 
+
 class ArchivoUpdate(BaseModel):
     nombre: Optional[str] = None
     url: Optional[str] = None
+
 
 class ArchivoList(BaseModel):
     archivos: List[Archivo]

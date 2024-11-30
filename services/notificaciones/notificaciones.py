@@ -5,27 +5,31 @@ from fastapi import APIRouter, HTTPException, Response, status
 import pymongo
 from bson.objectid import ObjectId
 from dotenv import load_dotenv
-from models.notificacion import Notification, NotificationList, NotificationNew, NotificationUpdate
+from models.notificacion import (
+    Notification,
+    NotificationList,
+    NotificationNew,
+    NotificationUpdate,
+)
 from email_service import send_email, EmailSchema
 
 load_dotenv()
 MONGO_URL = os.getenv("MONGO_URL")
 
-notificaciones_bp = APIRouter(
-    prefix="/notificaciones",
-    tags=['notificaciones']
-)
+notificaciones_bp = APIRouter(prefix="/v2/notificaciones", tags=["notificaciones"])
 
 # Configuración de MongoDB
 client = pymongo.MongoClient(MONGO_URL)
 db = client.laWikiv2
 notificaciones = db.notificaciones
 
-SERVICE_USUARIOS_PORT = os.getenv("SERVICE_USUARIOS_PORT")
-ENDPOINT_USUARIOS = os.getenv("ENDPOINT_USUARIOS")
+SERVICE_NOTIFICACIONES_PORT = os.getenv("SERVICE_NOTIFICACIONES_PORT")
+ENDPOINT_NOTIFICACIONES = os.getenv("ENDPOINT_NOTIFICACIONES")
 
 
-USER_SERVICE_URL = f"http://localhost:{SERVICE_USUARIOS_PORT}/{ENDPOINT_USUARIOS}"
+USER_SERVICE_URL = (
+    f"http://localhost:{SERVICE_NOTIFICACIONES_PORT}/{ENDPOINT_NOTIFICACIONES}"
+)
 
 # Crear nueva notificacion
 # @notificaciones_bp.post("/")
@@ -36,9 +40,9 @@ USER_SERVICE_URL = f"http://localhost:{SERVICE_USUARIOS_PORT}/{ENDPOINT_USUARIOS
 #     notificaciones.insert_one(notification.model_dump())
 #     return ("Creado satisfactoriamente")
 
+
 @notificaciones_bp.post("/")
 async def create_notification(notification: NotificationNew):
-
     # Buscar al usuario en la colección de usuarios
     user = await get_user(notification.user_id)
     if not user:
@@ -46,16 +50,18 @@ async def create_notification(notification: NotificationNew):
 
     # Verificar si el usuario quiere recibir correos
     if not user.get("wants_emails", True):
-        raise HTTPException(status_code=400, detail="El usuario no quiere recibir correos")
+        raise HTTPException(
+            status_code=400, detail="El usuario no quiere recibir correos"
+        )
 
     # Extraer el correo electrónico
     recipient_email = user["email"]
 
     # Enviar el correo
     try:
-        subject="Att: El equipo de laWiki"
-        email=recipient_email
-        body=notification.message
+        subject = "Att: El equipo de laWiki"
+        email = recipient_email
+        body = notification.message
         email = EmailSchema(email=email, subject=subject, body=body)
         result = await send_email(email)
         notificaciones.insert_one(notification.model_dump())
@@ -79,7 +85,10 @@ async def get_all_notifications():
         notification["_id"] = str(notification["_id"])  # Convertir ObjectId a string
 
     # Crear una lista de objetos Notification a partir de los resultados
-    return NotificationList(notifications=[Notification(**notif) for notif in notifications])
+    return NotificationList(
+        notifications=[Notification(**notif) for notif in notifications]
+    )
+
 
 # Obtener Notificación por ID (GET)
 @notificaciones_bp.get("/{notification_id}", response_model=Notification)
@@ -89,6 +98,7 @@ async def get_notification(notification_id: str):
         raise HTTPException(status_code=404, detail="Notificación no encontrada")
     notification["_id"] = str(notification["_id"])  # Convertir ObjectId a string
     return Notification(**notification)
+
 
 # Obtener todas las Notificaciones de un Usuario (GET)
 @notificaciones_bp.get("/usuario/{user_id}", response_model=NotificationList)
@@ -101,28 +111,39 @@ async def get_notifications(user_id: str):
     # Buscar todas las notificaciones en la base de datos para ese usuario
     notifications = list(notificaciones.find({"user_id": user_id}))
     if not notifications:
-        raise HTTPException(status_code=404, detail="No se encontraron notificaciones para el usuario proporcionado")
+        raise HTTPException(
+            status_code=404,
+            detail="No se encontraron notificaciones para el usuario proporcionado",
+        )
 
     # Convertir `_id` (ObjectId) a `str` en los resultados
     for notification in notifications:
         notification["_id"] = str(notification["_id"])
 
     # Retornar la lista de notificaciones
-    return NotificationList(notifications=[Notification(**notification) for notification in notifications])
+    return NotificationList(
+        notifications=[Notification(**notification) for notification in notifications]
+    )
+
 
 # Actualizar Notificación (PUT)
 @notificaciones_bp.put("/{notification_id}", response_model=Notification)
 async def update_notification(notification_id: str, update_data: NotificationUpdate):
     result = notificaciones.update_one(
         {"_id": ObjectId(notification_id)},
-        {"$set": update_data.dict(exclude_unset=True)}  # Solo actualiza los campos proporcionados
+        {
+            "$set": update_data.dict(exclude_unset=True)
+        },  # Solo actualiza los campos proporcionados
     )
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Notificación no encontrada")
 
     updated_notification = notificaciones.find_one({"_id": ObjectId(notification_id)})
-    updated_notification["_id"] = str(updated_notification["_id"])  # Convertir ObjectId a string
+    updated_notification["_id"] = str(
+        updated_notification["_id"]
+    )  # Convertir ObjectId a string
     return Notification(**updated_notification)
+
 
 # Eliminar Notificación (DELETE)
 @notificaciones_bp.delete("/{notification_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -131,6 +152,7 @@ async def delete_notification(notification_id: str):
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Notificación no encontrada")
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
 
 async def get_user(user_id: str):
     try:
@@ -141,6 +163,11 @@ async def get_user(user_id: str):
             user = response.json()
             return user
     except httpx.HTTPStatusError as e:
-        raise HTTPException(status_code=e.response.status_code, detail="Usuario no encontrado")
+        raise HTTPException(
+            status_code=e.response.status_code, detail="Usuario no encontrado"
+        )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al conectar con el servicio de usuarios: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error al conectar con el servicio de usuarios: {str(e)}",
+        )

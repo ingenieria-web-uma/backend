@@ -12,9 +12,11 @@ app = FastAPI()
 # Registrar los microservicios como Blueprints
 app.include_router(wikis_bp)
 
+
 @app.get("/")
 def main_route():
     return f"Servicio de wikis corriendo en el puerto {os.getenv('SERVICE_WIKIS_PORT')}"
+
 
 # Ejecutar la aplicación FASTAPI
 if __name__ == "__main__":

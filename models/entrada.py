@@ -9,12 +9,14 @@ from models.baseMongo import MongoBase
 class EntradaId(BaseModel, MongoBase):
     idEntrada: PydanticObjectId
 
+
 class Entrada(BaseModel):
-    id: PydanticObjectId = Field(alias='_id')
+    id: PydanticObjectId = Field(alias="_id")
     idWiki: PydanticObjectId
     idVersionActual: PydanticObjectId
     nombre: str
     slug: str
+
 
 class EntradaUpdate(BaseModel):
     idWiki: Optional[PydanticObjectId] = None
@@ -22,16 +24,17 @@ class EntradaUpdate(BaseModel):
     nombre: Optional[str] = None
     slug: Optional[str] = None
 
-    @model_validator(mode='before')
+    @model_validator(mode="before")
     def generar_slug(cls, valores):
         if "slug" in valores:
             valores["slug"] = None
         if "nombre" in valores:
-            valores['slug'] = valores['nombre'].lower().replace(" ", "-")
+            valores["slug"] = valores["nombre"].lower().replace(" ", "-")
         return valores
 
     class Config:
-        exclude = {'slug'}
+        exclude = {"slug"}
+
 
 class EntradaNew(BaseModel):
     idWiki: PydanticObjectId
@@ -39,14 +42,15 @@ class EntradaNew(BaseModel):
     nombre: str
     slug: Optional[str] = None
 
-    @model_validator(mode='before')
+    @model_validator(mode="before")
     def generar_slug(cls, valores):
-        if 'nombre' in valores:
-            valores['slug'] = valores['nombre'].lower().replace(" ", "-")
+        if "nombre" in valores:
+            valores["slug"] = valores["nombre"].lower().replace(" ", "-")
         return valores
 
     class Config:
-        exclude = {'slug'}
+        exclude = {"slug"}
+
 
 class EntradaList(BaseModel):
     entradas: List[Entrada]

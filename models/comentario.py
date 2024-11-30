@@ -20,13 +20,15 @@ class ComentarioFilter(BaseModel, MongoBase):
             return {"$regex": v, "$options": "i"}  # Convertir en regex si no es None
         return v
 
+
 class Comentario(BaseModel, MongoBase):
-    id: PydanticObjectId = Field(alias='_id')
+    id: PydanticObjectId = Field(alias="_id")
     idUsuario: PydanticObjectId
     idEntrada: PydanticObjectId
     contenido: str
     fechaCreacion: datetime
     fechaEdicion: Optional[datetime] = None
+
 
 class ComentarioNew(BaseModel, MongoBase):
     idUsuario: PydanticObjectId
@@ -34,9 +36,11 @@ class ComentarioNew(BaseModel, MongoBase):
     contenido: str
     fechaCreacion: datetime = Field(default_factory=datetime.now)
 
+
 class ComentarioUpdate(BaseModel, MongoBase):
     contenido: str
     fechaEdicion: datetime = Field(default_factory=datetime.now)
+
 
 class ComentarioList(BaseModel, MongoBase):
     comentarios: List[Comentario]

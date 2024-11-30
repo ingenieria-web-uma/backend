@@ -10,7 +10,8 @@ class Notification(BaseModel):
     message: str = Field(..., min_length=1)
     is_read: bool = Field(default=False)
     timestamp: datetime
-    user_id: PydanticObjectId 
+    user_id: PydanticObjectId
+
 
 class NotificationNew(BaseModel):
     message: str = Field(..., min_length=1)
@@ -18,9 +19,11 @@ class NotificationNew(BaseModel):
     is_read: bool = Field(default=False)
     timestamp: datetime = Field(default=datetime.now())
 
+
 class NotificationUpdate(BaseModel):
     message: Optional[str] = None
     is_read: Optional[bool] = None
+
 
 class NotificationList(BaseModel):
     notifications: List[Notification]

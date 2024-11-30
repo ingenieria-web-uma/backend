@@ -31,5 +31,7 @@ class MapListResponse(BaseModel):
             raise TypeError("El campo 'mapas' debe ser una lista.")
         for item in value:
             if not isinstance(item, MapInfo):
-                raise TypeError("Cada elemento en 'mapas' debe ser una instancia válida de MapInfo.")
+                raise TypeError(
+                    "Cada elemento en 'mapas' debe ser una instancia válida de MapInfo."
+                )
         return value

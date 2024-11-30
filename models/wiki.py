@@ -15,15 +15,19 @@ class WikiFilter(BaseModel):
             return {"$regex": v, "$options": "i"}  # Convertir en regex si no es None
         return v
 
+
 class Wiki(BaseModel, MongoBase):
-    id: PydanticObjectId = Field(alias='_id')
+    id: PydanticObjectId = Field(alias="_id")
     nombre: str
+
 
 class WikiUpdate(BaseModel, MongoBase):
     nombre: str
 
+
 class WikiNew(BaseModel, MongoBase):
     nombre: str
+
 
 class WikiList(BaseModel, MongoBase):
     wikis: List[Wiki]

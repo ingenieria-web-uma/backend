@@ -23,13 +23,18 @@ client = pymongo.MongoClient(MONGO_URL)
 db = client.laWikiv2
 notificaciones = db.notificaciones
 
+# Deberian ser los de Usuario??
 SERVICE_NOTIFICACIONES_PORT = os.getenv("SERVICE_NOTIFICACIONES_PORT")
 ENDPOINT_NOTIFICACIONES = os.getenv("ENDPOINT_NOTIFICACIONES")
 
-
-USER_SERVICE_URL = (
-    f"http://localhost:{SERVICE_NOTIFICACIONES_PORT}/{ENDPOINT_NOTIFICACIONES}"
-)
+if (os.getenv("DOCKER")): 
+    USER_SERVICE_URL = (
+        "https://gateway:8000/notificaciones"
+    )
+else:
+    USER_SERVICE_URL = (
+        f"http://localhost:{SERVICE_NOTIFICACIONES_PORT}/{ENDPOINT_NOTIFICACIONES}"
+    )
 
 # Crear nueva notificacion
 # @notificaciones_bp.post("/")

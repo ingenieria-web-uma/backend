@@ -17,5 +17,6 @@ COPY ./models /code/models
 ARG SERVICE_PATH=./app.py
 COPY ${SERVICE_PATH} /code/
 
+ENV DOCKER=1
 
 CMD ["python", "app.py"]

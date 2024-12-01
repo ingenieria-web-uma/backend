@@ -49,7 +49,7 @@ class EntradaNew(BaseModel):
     slug: Optional[str] = None
     nombreUsuario: str
     idUsuario: PydanticObjectId
-    fechaCreacion: datetime = datetime.now()
+    fechaCreacion: datetime = Field(default_factory=datetime.now)
 
     @model_validator(mode="before")
     def generar_slug(cls, valores):

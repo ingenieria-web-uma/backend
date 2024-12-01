@@ -27,7 +27,7 @@ def get_entries(nombre: str = None, idWiki: str = None):
     if nombre:
         query["nombre"] = {"$regex": nombre, "$options": "i"}
     if idWiki:
-        query["idWiki"] = idWiki
+        query["idWiki"] = ObjectId(idWiki)
     try:
         entradas_data = entradas.find(query).to_list(1000)
         return EntradaList(entradas=entradas_data)

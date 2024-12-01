@@ -1,10 +1,11 @@
 import os
+
+import httpx
 import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-import httpx
 
 load_dotenv()
 
@@ -48,9 +49,10 @@ async def gateway(service: str, path: str, request: Request):
     service_url = services[service]
     body = await request.json() if request.method in ["POST", "PUT"] else None
     headers = dict(request.headers)
+    query_params = str(request.query_params)
 
     response = await forward_request(
-        service_url, request.method, f"/{path}", body, headers
+        service_url, request.method, f"/{path}?{query_params}", body, headers
     )
 
     return JSONResponse(status_code=response.status_code, content=response.json())

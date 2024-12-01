@@ -6,9 +6,9 @@ from bson.objectid import ObjectId
 from dotenv import load_dotenv
 from fastapi import APIRouter, HTTPException, Response, status
 
+from models.comentario import ComentarioList
 from models.entrada import Entrada, EntradaList, EntradaNew, EntradaUpdate
 from models.wiki import Wiki
-from models.comentario import ComentarioList
 
 load_dotenv()
 MONGO_URL = os.getenv("MONGO_URL")

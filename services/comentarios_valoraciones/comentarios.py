@@ -49,9 +49,7 @@ def create_comments(nuevoComentario: ComentarioNew):
     raise HTTPException(status_code=201, detail="Comentario creado correctamente")
 
 
-#
-#
-# # DELETE /comentarios
+# DELETE /comentarios
 @comentarios_bp.delete("/{id}")
 def delete_comments(id):
     try:
@@ -68,7 +66,7 @@ def delete_comments(id):
         raise HTTPException(status_code=404, detail="Comentario no encontrado")
 
 
-#
+# Elimina un comentario de una entrada
 @comentarios_bp.delete("/")
 def delete_comments_byIdEntrada(idEntrada: EntradaId):
     try:
@@ -86,8 +84,7 @@ def delete_comments_byIdEntrada(idEntrada: EntradaId):
         )
 
 
-#
-# actualiza un comentario de una entrada
+# Actualiza un comentario de una entrada
 @comentarios_bp.put("/{id}")
 def update_comments(id, newEntrada: ComentarioUpdate):
     try:

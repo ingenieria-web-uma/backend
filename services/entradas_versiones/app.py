@@ -17,15 +17,11 @@ app.include_router(versiones_router)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-@app.get("/")
-def main_route():
-    return f"<a href='http://127.0.0.1:{os.getenv('SERVICE_ENTRADAS_PORT')}/entradas'>CLICK AQUI PARA IR AL APARTADO DE LAS ENTRADAS</a>"
 
 
 if __name__ == "__main__":

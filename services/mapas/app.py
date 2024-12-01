@@ -15,15 +15,11 @@ app.include_router(mapas_bp)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-@app.route("/")
-def main_route():
-    return f"Servicio de mapas corriendo en el puerto {os.getenv('SERVICE_MAPAS_PORT')}"
 
 
 # Ejecutar la aplicación FastAPI

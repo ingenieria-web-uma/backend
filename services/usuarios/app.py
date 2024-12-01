@@ -15,15 +15,11 @@ app.include_router(usuarios_router)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-@app.get("/")
-def main_route():
-    return f"<a href='http://localhost:{os.getenv('SERVICE_USUARIOS_PORT')}/usuarios'>CLICK AQUI PARA IR AL APARTADO DE LOS USUARIOS</a>"
 
 
 # Ejecutar la aplicación

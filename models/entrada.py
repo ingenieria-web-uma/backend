@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List, Optional
 
 from pydantic import BaseModel, Field, model_validator
@@ -16,6 +17,9 @@ class Entrada(BaseModel):
     idVersionActual: PydanticObjectId
     nombre: str
     slug: str
+    nombreUsuario: str
+    idUsuario: PydanticObjectId
+    fechaCreacion: datetime
 
 
 class EntradaUpdate(BaseModel):
@@ -23,6 +27,8 @@ class EntradaUpdate(BaseModel):
     idVersionActual: Optional[PydanticObjectId] = None
     nombre: Optional[str] = None
     slug: Optional[str] = None
+    nombreUsuario: Optional[str] = None
+    idUsuario: Optional[PydanticObjectId] = None
 
     @model_validator(mode="before")
     def generar_slug(cls, valores):
@@ -41,6 +47,9 @@ class EntradaNew(BaseModel):
     idVersionActual: PydanticObjectId
     nombre: str
     slug: Optional[str] = None
+    nombreUsuario: str
+    idUsuario: PydanticObjectId
+    fechaCreacion: datetime = datetime.now()
 
     @model_validator(mode="before")
     def generar_slug(cls, valores):

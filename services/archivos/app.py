@@ -27,6 +27,4 @@ if __name__ == "__main__":
     puerto = os.getenv("SERVICE_ARCHIVOS_PORT")
     if puerto:
         puerto = int(puerto)
-        uvicorn.run(
-            "services.archivos.app:app", host="0.0.0.0", port=puerto, reload=True
-        )
+        uvicorn.run("app:app", host="0.0.0.0", port=puerto, reload=True)

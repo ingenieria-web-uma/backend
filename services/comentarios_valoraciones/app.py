@@ -28,7 +28,7 @@ if __name__ == "__main__":
     if puerto:
         puerto = int(puerto)
         uvicorn.run(
-            "services.comentarios_valoraciones.app:app",
+            "app:app",
             host="0.0.0.0",
             port=puerto,
             reload=True,

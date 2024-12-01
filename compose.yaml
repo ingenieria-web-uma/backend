@@ -1,18 +1,12 @@
 x-service-base: &service-base
   build:
-    args:
-      MODEL_PATH: models
     context: .
-    dockerfile: Dockerfile
   env_file:
     - .env
 
 services:
   gateway:
     <<: *service-base
-    build:
-      args:
-        SERVICE_PATH: .
     container_name: gateway
     ports:
       - 8000:8000

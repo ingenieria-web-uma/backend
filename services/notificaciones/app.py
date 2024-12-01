@@ -1,9 +1,9 @@
 import os
 
 import uvicorn
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from dotenv import load_dotenv
 from notificaciones import notificaciones_bp
 
 load_dotenv()
@@ -26,6 +26,4 @@ if __name__ == "__main__":
     puerto = os.getenv("SERVICE_NOTIFICACIONES_PORT")
     if puerto:
         puerto = int(puerto)
-        uvicorn.run(
-            "services.notificaciones.app:app", host="0.0.0.0", port=puerto, reload=True
-        )
+        uvicorn.run("app:app", host="0.0.0.0", port=puerto, reload=True)

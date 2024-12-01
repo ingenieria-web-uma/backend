@@ -1,10 +1,10 @@
 import os
 
 import uvicorn
-from mapas import mapas_bp
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from mapas import mapas_bp
 
 load_dotenv()
 
@@ -27,4 +27,4 @@ if __name__ == "__main__":
     puerto = os.getenv("SERVICE_MAPAS_PORT")
     if puerto:
         puerto = int(puerto)
-        uvicorn.run("services.mapas.app:app", host="0.0.0.0", port=puerto, reload=True)
+        uvicorn.run("app:app", host="0.0.0.0", port=puerto, reload=True)

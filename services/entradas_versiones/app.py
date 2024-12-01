@@ -2,9 +2,9 @@ import os
 
 import uvicorn
 from dotenv import load_dotenv
+from entradas import entradas_router
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from entradas import entradas_router
 from versiones import versiones_router
 
 load_dotenv()
@@ -29,7 +29,7 @@ if __name__ == "__main__":
     if puerto:
         puerto = int(puerto)
         uvicorn.run(
-            "services.entradas_versiones.app:app",
+            "app:app",
             host="0.0.0.0",
             port=puerto,
             reload=True,

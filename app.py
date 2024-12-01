@@ -19,15 +19,15 @@ app.add_middleware(
 )
 
 services = {
-    "wikis": f"http://{os.getenv('ENDPOINT_WIKIS')}:8000/v2/wikis",
-    "entradas": f"http://{os.getenv('ENDPOINT_ENTRADAS')}:8000/v2/entradas",
-    "versiones": f"http://{os.getenv('ENDPOINT_ENTRADAS')}:8000/v2/valoraciones",
-    "comentarios": f"http://{os.getenv('ENDPOINT_COMENTARIOS')}:8000/v2/comentarios",
-    "valoraciones": f"http://{os.getenv('ENDPOINT_COMENTARIOS')}:8000/v2/valoraciones",
-    "usuarios": f"http://{os.getenv('ENDPOINT_USUARIOS')}:8000/v2/usuarios",
-    "archivos": f"http://{os.getenv('ENDPOINT_ARCHIVOS')}:8000/v2/archivos",
-    "notificaciones": f"http://{os.getenv('ENDPOINT_NOTIFICACIONES')}:8000/v2/notificaciones",
-    "mapas": f"http://{os.getenv('ENDPOINT_MAPAS')}:8000/v2/mapas",
+    "wikis": f"http://{os.getenv('ENDPOINT_WIKIS')}:{os.getenv('SERVICE_WIKIS_PORT')}/v2/wikis",
+    "entradas": f"http://{os.getenv('ENDPOINT_ENTRADAS')}:{os.getenv('SERVICE_ENTRADAS_PORT')}/v2/entradas",
+    "versiones": f"http://{os.getenv('ENDPOINT_ENTRADAS')}:{os.getenv('SERVICE_ENTRADAS_PORT')}/v2/valoraciones",
+    "comentarios": f"http://{os.getenv('ENDPOINT_COMENTARIOS')}:{os.getenv('SERVICE_COMENTARIOS_PORT')}/v2/comentarios",
+    "valoraciones": f"http://{os.getenv('ENDPOINT_COMENTARIOS')}:{os.getenv('SERVICE_COMENTARIOS_PORT')}/v2/valoraciones",
+    "usuarios": f"http://{os.getenv('ENDPOINT_USUARIOS')}:{os.getenv('SERVICE_USUARIOS_PORT')}/v2/usuarios",
+    "archivos": f"http://{os.getenv('ENDPOINT_ARCHIVOS')}:{os.getenv('SERVICE_ARCHIVOS_PORT')}/v2/archivos",
+    "notificaciones": f"http://{os.getenv('ENDPOINT_NOTIFICACIONES')}:{os.getenv('SERVICE_NOTIFICACIONES_PORT')}/v2/notificaciones",
+    "mapas": f"http://{os.getenv('ENDPOINT_MAPAS')}:{os.getenv('SERVICE_MAPAS_PORT')}/v2/mapas",
 }
 
 

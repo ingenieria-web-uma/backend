@@ -8,72 +8,67 @@ x-service-base: &service-base
     - .env
 
 services:
+  gateway:
+    <<: *service-base
+    build:
+      args:
+        SERVICE_PATH: .
+    container_name: gateway
+    ports:
+      - 8000:8000
+    depends_on:
+      - wikis
+      - entradas-versiones
+      - comentarios-valoraciones
+      - archivos
+      - notificaciones
+      - mapas
+
   wikis:
     <<: *service-base
     build:
       args:
         SERVICE_PATH: services/wikis
-        SERVICE_PORT: ${SERVICE_WIKIS_PORT}
     container_name: wikis
-    ports:
-      - ${SERVICE_WIKIS_PORT}:${SERVICE_WIKIS_PORT}
 
   entradas-versiones:
     <<: *service-base
     build:
       args:
         SERVICE_PATH: services/entradas_versiones
-        SERVICE_PORT: ${SERVICE_ENTRADAS_PORT}
     container_name: entradas_versiones
-    ports:
-      - ${SERVICE_ENTRADAS_PORT}:${SERVICE_ENTRADAS_PORT}
 
   comentarios-valoraciones:
     <<: *service-base
     build:
       args:
         SERVICE_PATH: services/comentarios_valoraciones
-        SERVICE_PORT: ${SERVICE_COMENTARIOS_PORT}
     container_name: comentarios_valoraciones
-    ports:
-      - ${SERVICE_COMENTARIOS_PORT}:${SERVICE_COMENTARIOS_PORT}
-
-  archivos:
-    <<: *service-base
-    build:
-      args:
-        SERVICE_PATH: services/archivos
-        SERVICE_PORT: ${SERVICE_ARCHIVOS_PORT}
-    container_name: archivos
-    ports:
-      - ${SERVICE_ARCHIVOS_PORT}:${SERVICE_ARCHIVOS_PORT}
-
-  notificaciones:
-    <<: *service-base
-    build:
-      args:
-        SERVICE_PATH: services/notificaciones
-        SERVICE_PORT: ${SERVICE_NOTIFICACIONES_PORT}
-    container_name: notificaciones
-    ports:
-      - ${SERVICE_NOTIFICACIONES_PORT}:${SERVICE_NOTIFICACIONES_PORT}
-
-  mapas:
-    <<: *service-base
-    build:
-      args:
-        SERVICE_PATH: services/mapas
-        SERVICE_PORT: ${SERVICE_MAPAS_PORT}
-    container_name: mapas
-    ports:
-      - ${SERVICE_MAPAS_PORT}:${SERVICE_MAPAS_PORT}
 
   usuarios:
     <<: *service-base
     build:
       args:
         SERVICE_PATH: services/usuarios
-        SERVICE_PORT: ${SERVICE_USUARIOS_PORT}
     container_name: usuarios
-    ports:
-      - ${SERVICE_USUARIOS_PORT}:${SERVICE_USUARIOS_PORT}
+
+  archivos:
+    <<: *service-base
+    build:
+      args:
+        SERVICE_PATH: services/archivos
+    container_name: archivos
+
+  notificaciones:
+    <<: *service-base
+    build:
+      args:
+        SERVICE_PATH: services/notificaciones
+    container_name: notificaciones
+
+  mapas:
+    <<: *service-base
+    build:
+      args:
+        SERVICE_PATH: services/mapas
+    container_name: mapas

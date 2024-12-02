@@ -1,8 +1,6 @@
 name: lawiki
 
-x-service-base: &service-base
-  build:
-    context: .
+x-backend: &backend
   env_file:
     - .env
 
@@ -17,7 +15,9 @@ services:
       - 4200:4200
 
   gateway:
-    <<: *service-base
+    <<: *backend
+    build:
+      context: .
     container_name: gateway
     ports:
       - 8000:8000
@@ -25,55 +25,63 @@ services:
       - wikis
       - entradas-versiones
       - comentarios-valoraciones
+      - usuarios
       - archivos
       - notificaciones
       - mapas
 
   wikis:
-    <<: *service-base
+    <<: *backend
     build:
+      context: .
       args:
         SERVICE_PATH: services/wikis
     container_name: wikis
 
   entradas-versiones:
-    <<: *service-base
+    <<: *backend
     build:
+      context: .
       args:
         SERVICE_PATH: services/entradas_versiones
     container_name: entradas_versiones
 
   comentarios-valoraciones:
-    <<: *service-base
+    <<: *backend
     build:
+      context: .
       args:
         SERVICE_PATH: services/comentarios_valoraciones
     container_name: comentarios_valoraciones
 
   usuarios:
-    <<: *service-base
+    <<: *backend
     build:
+      context: .
       args:
         SERVICE_PATH: services/usuarios
     container_name: usuarios
 
   archivos:
-    <<: *service-base
+    <<: *backend
     build:
+      context: .
       args:
         SERVICE_PATH: services/archivos
     container_name: archivos
 
   notificaciones:
-    <<: *service-base
+    <<: *backend
     build:
+      context: .
       args:
         SERVICE_PATH: services/notificaciones
     container_name: notificaciones
 
   mapas:
-    <<: *service-base
+    <<: *backend
     build:
+      context: .
       args:
         SERVICE_PATH: services/mapas
     container_name: mapas

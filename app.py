@@ -5,7 +5,6 @@ import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 
 load_dotenv()
 
@@ -31,7 +30,12 @@ SERVICE_MAP = {
     "mapas": f"http://{os.getenv('ENDPOINT_MAPAS')}:{os.getenv('SERVICE_MAPAS_PORT')}/v2/mapas",
 }
 
-@app.api_route("/{service}/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
+
+@app.api_route(
+    "/{service}/{path:path}",
+    methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
+    include_in_schema=False,
+)
 async def gateway(request: Request, service: str, path: str):
     # Validate the requested service
     if service not in SERVICE_MAP:
@@ -50,11 +54,12 @@ async def gateway(request: Request, service: str, path: str):
                 request.method,
                 target_url,
                 headers=request.headers.raw,
-                content=await request.body()
+                content=await request.body(),
             )
             return response.json()
         except httpx.HTTPError as e:
             raise HTTPException(status_code=500, detail=str(e))
+
 
 if __name__ == "__main__":
     uvicorn.run("app:app", host="0.0.0.0", reload=True)

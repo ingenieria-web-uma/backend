@@ -1,7 +1,8 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import Annotated, List, Optional
 
-from pydantic import BaseModel, Field, model_validator
+from fastapi import Query
+from pydantic import BaseModel, Field, field_validator, model_validator
 from pydantic_mongo import PydanticObjectId
 
 from models.baseMongo import MongoBase
@@ -11,18 +12,18 @@ class EntradaId(BaseModel, MongoBase):
     idEntrada: PydanticObjectId
 
 
-class Entrada(BaseModel):
+class Entrada(BaseModel, MongoBase):
     id: PydanticObjectId = Field(alias="_id")
     idWiki: PydanticObjectId
     idVersionActual: PydanticObjectId
     nombre: str
     slug: str
-    nombreUsuario: str
     idUsuario: PydanticObjectId
+    nombreUsuario: str
     fechaCreacion: datetime
 
 
-class EntradaUpdate(BaseModel):
+class EntradaUpdate(BaseModel, MongoBase):
     idWiki: Optional[PydanticObjectId] = None
     idVersionActual: Optional[PydanticObjectId] = None
     nombre: Optional[str] = None
@@ -42,7 +43,7 @@ class EntradaUpdate(BaseModel):
         exclude = {"slug"}
 
 
-class EntradaNew(BaseModel):
+class EntradaNew(BaseModel, MongoBase):
     idWiki: PydanticObjectId
     idVersionActual: PydanticObjectId
     nombre: str
@@ -61,5 +62,19 @@ class EntradaNew(BaseModel):
         exclude = {"slug"}
 
 
-class EntradaList(BaseModel):
+class EntradaList(BaseModel, MongoBase):
     entradas: List[Entrada]
+
+
+class EntradaFiltro(BaseModel, MongoBase):
+    idWiki: Optional[PydanticObjectId] = None
+    idVersionActual: Optional[PydanticObjectId] = None
+    nombre: Annotated[Optional[str], Field(validate_default=True)] = Query(None)
+    idUsuario: Optional[PydanticObjectId] = None
+    nombreUsuario: Annotated[Optional[str], Field(validate_default=True)] = Query(None)
+
+    @field_validator("nombre")
+    def make_regex(cls, v):
+        if v is not None:
+            return {"$regex": v, "$options": "i"}
+        return v

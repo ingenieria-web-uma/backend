@@ -4,10 +4,16 @@ import pymongo
 import requests
 from bson.objectid import ObjectId
 from dotenv import load_dotenv
-from fastapi import APIRouter, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 
 from models.comentario import ComentarioList
-from models.entrada import Entrada, EntradaList, EntradaNew, EntradaUpdate
+from models.entrada import (
+    Entrada,
+    EntradaFiltro,
+    EntradaList,
+    EntradaNew,
+    EntradaUpdate,
+)
 from models.wiki import Wiki
 
 load_dotenv()
@@ -21,16 +27,13 @@ entradas = db.entradas
 
 
 # GET /entradas
-@entradas_router.get("/", response_model=EntradaList)
-def get_entries(nombre: str = None, idWiki: str = None):
-    query = {}
-    if nombre:
-        query["nombre"] = {"$regex": nombre, "$options": "i"}
-    if idWiki:
-        query["idWiki"] = ObjectId(idWiki)
+@entradas_router.get("/")
+def get_entries(filtro: EntradaFiltro = Depends()):
     try:
-        entradas_data = entradas.find(query).to_list(1000)
-        return EntradaList(entradas=entradas_data)
+        entradas_data = entradas.find(filtro.to_mongo_dict(exclude_none=True))
+        return EntradaList(entradas=[entrada for entrada in entradas_data]).model_dump(
+            exclude_none=True
+        )
     except Exception as e:
         raise HTTPException(
             status_code=400, detail=f"Error al buscar las entradas: {str(e)}"
@@ -38,12 +41,12 @@ def get_entries(nombre: str = None, idWiki: str = None):
 
 
 # GET /entradas/<id>
-@entradas_router.get("/{id}", response_model=Entrada)
+@entradas_router.get("/{id}")
 def get_entry_by_id(id: str):
     try:
         entrada = entradas.find_one({"_id": ObjectId(id)})
         if entrada:
-            return entrada
+            return Entrada(**entrada).model_dump()
         else:
             raise HTTPException(status_code=404, detail="Entrada no encontrada")
     except Exception as e:
@@ -52,33 +55,16 @@ def get_entry_by_id(id: str):
         )
 
 
-# # POST /entradas
-@entradas_router.post("/", response_model=Entrada, status_code=status.HTTP_201_CREATED)
+# POST /entradas
+@entradas_router.post("/")
 def create_entry(entrada: EntradaNew):
-    if not ObjectId.is_valid(entrada.idWiki):
-        raise HTTPException(
-            status_code=400,
-            detail=f"ID de wiki {entrada.idWiki} no tiene formato valido",
-        )
-    if not ObjectId.is_valid(entrada.idVersionActual):
-        raise HTTPException(
-            status_code=400,
-            detail=f"ID de version actual {entrada.idVersionActual} no tiene formato valido",
-        )
-    entrada.idVersionActual = ObjectId(entrada.idVersionActual)
-    entrada.idWiki = ObjectId(entrada.idWiki)
     try:
-        if entrada.nombre and entradas.find_one({"nombre": entrada.nombre}):
-            raise HTTPException(
-                status_code=400,
-                detail=f"Ya existe una entrada con el nombre {entrada.nombre}",
-            )
-        result = entradas.insert_one(entrada.model_dump(by_alias=True))
-        return entradas.find_one({"_id": result.inserted_id})
+        entradas.insert_one(entrada.to_mongo_dict(exclude_none=True))
     except Exception as e:
         raise HTTPException(
-            status_code=400, detail=f"Error al buscar la entrada: {str(e)}"
+            status_code=400, detail=f"Error al crear la entrada: {str(e)}"
         )
+    raise HTTPException(status_code=201, detail="Entrada creada correctamente")
 
 
 # PUT /entradas/<id>

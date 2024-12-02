@@ -104,7 +104,6 @@ def delete_wiki(id: str):
 
 @wikis_bp.get("/{id}/entradas")
 def get_entradas_byWiki(id: str):
-    nombreServicio = os.getenv("ENDPOINT_ENTRADAS")
     puertoServicio = os.getenv("SERVICE_ENTRADAS_PORT")
     # Obtenemos del microservicio de entradas las entradas de la wiki
     try:

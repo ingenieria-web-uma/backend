@@ -41,10 +41,14 @@ async def forward_request(
         return response
 
 
-@app.api_route("/{service}/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+@app.api_route(
+    "/{service}/{path:path}",
+    methods=["GET", "POST", "PUT", "DELETE"],
+    include_in_schema=False,
+)
 async def gateway(service: str, path: str, request: Request):
     if service not in services:
-        raise HTTPException(status_code=404, detail="Service not found")
+        raise HTTPException(status_code=404, detail="Servicio no encontrado")
 
     service_url = services[service]
     body = await request.json() if request.method in ["POST", "PUT"] else None

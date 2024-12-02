@@ -109,10 +109,12 @@ def get_entradas_byWiki(id: str):
     # Obtenemos del microservicio de entradas las entradas de la wiki
     try:
         # Hay que cambiar la URL por la del microservicio de entradas
-        if (os.getenv("DOCKER")):
+        if os.getenv("DOCKER"):
             response = requests.get(f"http://gateway:8000/entradas?wiki={id}")
         else:
-            response = requests.get(f"http://127.0.0.1:{puertoServicio}/v2/entradas?wiki={id}")
+            response = requests.get(
+                f"http://127.0.0.1:{puertoServicio}/v2/entradas?wiki={id}"
+            )
         if response.status_code == 200:
             return response.json()
         else:

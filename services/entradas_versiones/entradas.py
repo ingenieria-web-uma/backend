@@ -130,8 +130,8 @@ def delete_entries_by_wiki(idWiki: str):
 
     entradasServiceName = os.getenv("ENDPOINT_ENTRADAS")
     entradasServicePort = os.getenv("SERVICE_ENTRADAS_PORT")
-    
-    if (os.getenv("DOCKER")): 
+
+    if os.getenv("DOCKER"):
         url_base = "https://gateway:8000"
     else:
         url_base = f"http://{entradasServiceName}:{entradasServicePort}/v2"
@@ -140,13 +140,9 @@ def delete_entries_by_wiki(idWiki: str):
         for entrada in entradas.find({"idWiki": idWiki}):
             id = entrada["_id"]
             # eliminamos las versiones de la entrada
-            requests.delete(
-                f"{url_base}/versiones?idEntrada={id}"
-            )
+            requests.delete(f"{url_base}/versiones?idEntrada={id}")
             # eliminamos la entrada
-            requests.delete(
-                f"{url_base}/entradas/{id}"
-            )
+            requests.delete(f"{url_base}/entradas/{id}")
     except Exception as e:
         raise HTTPException(
             status_code=400, detail=f"Error al buscar las entradas: {str(e)}"
@@ -169,15 +165,13 @@ def get_wiki_of_entry(id: str):
     idWiki = entrada["idWiki"]
     wikiServiceName = os.getenv("ENDPOINT_WIKIS")
     wikiServicePort = os.getenv("SERVICE_WIKIS_PORT")
-    if (os.getenv("DOCKER")): 
+    if os.getenv("DOCKER"):
         url_base = "https://gateway:8000"
     else:
         url_base = f"http://{wikiServiceName}:{wikiServicePort}/v2"
 
     try:
-        wiki = requests.get(
-            f"{url_base}/wikis/{idWiki}"
-        ).json()
+        wiki = requests.get(f"{url_base}/wikis/{idWiki}").json()
         return wiki
     except Exception as e:
         raise HTTPException(
@@ -199,15 +193,13 @@ def get_comentarios_for_entry(id: str):
 
     comentariosServiceName = os.getenv("ENDPOINT_COMENTARIOS")
     comentariosPort = os.getenv("SERVICE_COMENTARIOS_PORT")
-    if (os.getenv("DOCKER")): 
+    if os.getenv("DOCKER"):
         url_base = "https://gateway:8000"
     else:
         url_base = f"http://{comentariosServiceName}:{comentariosPort}/v2"
 
     try:
-        comentarios = requests.get(
-            f"{url_base}/comentarios?idEntrada={id}"
-        ).json()
+        comentarios = requests.get(f"{url_base}/comentarios?idEntrada={id}").json()
         return comentarios
     except Exception as e:
         raise HTTPException(

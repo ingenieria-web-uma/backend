@@ -22,7 +22,7 @@ app.add_middleware(
 SERVICE_MAP = {
     "wikis": f"http://{os.getenv('ENDPOINT_WIKIS')}:{os.getenv('SERVICE_WIKIS_PORT')}/v2/wikis",
     "entradas": f"http://{os.getenv('ENDPOINT_ENTRADAS')}:{os.getenv('SERVICE_ENTRADAS_PORT')}/v2/entradas",
-    "versiones": f"http://{os.getenv('ENDPOINT_ENTRADAS')}:{os.getenv('SERVICE_ENTRADAS_PORT')}/v2/valoraciones",
+    "versiones": f"http://{os.getenv('ENDPOINT_ENTRADAS')}:{os.getenv('SERVICE_ENTRADAS_PORT')}/v2/versiones",
     "comentarios": f"http://{os.getenv('ENDPOINT_COMENTARIOS')}:{os.getenv('SERVICE_COMENTARIOS_PORT')}/v2/comentarios",
     "valoraciones": f"http://{os.getenv('ENDPOINT_COMENTARIOS')}:{os.getenv('SERVICE_COMENTARIOS_PORT')}/v2/valoraciones",
     "usuarios": f"http://{os.getenv('ENDPOINT_USUARIOS')}:{os.getenv('SERVICE_USUARIOS_PORT')}/v2/usuarios",

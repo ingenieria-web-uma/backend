@@ -1,3 +1,5 @@
+name: lawiki
+
 x-service-base: &service-base
   build:
     context: .
@@ -5,6 +7,15 @@ x-service-base: &service-base
     - .env
 
 services:
+  frontend:
+    build:
+      context: ../frontend
+    environment:
+      NODE_ENV: production
+    container_name: frontend
+    ports:
+      - 4200:4200
+
   gateway:
     <<: *service-base
     container_name: gateway

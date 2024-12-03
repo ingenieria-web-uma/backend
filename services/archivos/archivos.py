@@ -42,7 +42,7 @@ async def subir_archivo(archivo: UploadFile):
         # Insert into MongoDB
         archivos.insert_one(ArchivoNew(**archivo_res).model_dump())  # Assuming ArchivoNew is a Pydantic model
         
-        return JSONResponse(content={"mensaje": f"Archivo con nombre {nombre} subido exitosamente"}, status_code=201)
+        return JSONResponse(content={"mensaje": f"Archivo con URL {url} subido exitosamente"}, status_code=201)
     except Exception as e:
         print(f"Error uploading file: {e}")
         raise HTTPException(status_code=500, detail=f"Error al subir el archivo, {e}")

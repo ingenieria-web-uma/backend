@@ -23,8 +23,8 @@ class Wiki(BaseModel, MongoBase):
 
 
 class WikiUpdate(BaseModel, MongoBase):
-    nombre: str
-    imagenUrl: str
+    nombre: Optional[str] = None
+    imagenUrl: Optional[str] = None
 
 
 class WikiNew(BaseModel, MongoBase):

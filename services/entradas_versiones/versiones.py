@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException, Response, status
 from datetime import datetime
 
 from models.version import VersionId, Version, VersionList, VersionNew, VersionUpdate
+from models.entrada import EntradaId
 
 load_dotenv()
 MONGO_URL = os.getenv("MONGO_URL")
@@ -123,18 +124,13 @@ def delete_version(id: str):
 
 
 # DELETE /versiones/
-@versiones_router.delete("/", status_code=status.HTTP_204_NO_CONTENT)
-def delete_versions_by_entradaId(idEntrada: str):
-    if not ObjectId.is_valid(idEntrada):
+@versiones_router.delete("/")
+def delete_versions_by_entradaId(idEntrada: EntradaId):
+    try:
+        res = versiones.delete_many(idEntrada.to_mongo_dict(exclude_none=True))
+        return {"message": f"{res.deleted_count} versiones eliminadas de la entrada {idEntrada.idEntrada}"}
+    except Exception as e:
         raise HTTPException(
-            status_code=400, detail=f"ID de entrada {idEntrada} no tiene formato válido"
+            status_code=400,
+            detail=f"Error al eliminar las versiones de la entrada: {str(e)}",
         )
-
-    result = versiones.delete_many({"idEntrada": ObjectId(idEntrada)})
-    if result.deleted_count == 0:
-        raise HTTPException(
-            status_code=404,
-            detail=f"No se encontraron versiones con idEntrada {idEntrada}",
-        )
-
-    return Response(status_code=status.HTTP_204_NO_CONTENT)

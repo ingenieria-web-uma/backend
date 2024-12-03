@@ -29,7 +29,7 @@ class WikiUpdate(BaseModel, MongoBase):
 
 class WikiNew(BaseModel, MongoBase):
     nombre: str
-    imagenUrl: str
+    imagenUrl: str = ""
 
 
 class WikiList(BaseModel, MongoBase):

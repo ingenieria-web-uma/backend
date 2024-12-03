@@ -56,7 +56,10 @@ async def gateway(request: Request, service: str, path: str):
                 headers=request.headers.raw,
                 content=await request.body(),
             )
-            return response.json()
+            if response.status_code == 204:
+                return {"message": "Operación realizada con éxito, sin contenido"}
+            else:
+                return response.json()
         except httpx.HTTPError as e:
             raise HTTPException(status_code=500, detail=str(e))
 

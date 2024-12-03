@@ -7,13 +7,8 @@ from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 
 from models.comentario import ComentarioList
-from models.entrada import (
-    Entrada,
-    EntradaFiltro,
-    EntradaList,
-    EntradaNew,
-    EntradaUpdate,
-)
+from models.entrada import (Entrada, EntradaFiltro, EntradaList, EntradaNew,
+                            EntradaUpdate)
 from models.wiki import Wiki
 
 load_dotenv()
@@ -98,10 +93,15 @@ def delete_entry(id: str):
     if not ObjectId.is_valid(id):
         raise HTTPException(status_code=400, detail=f"ID {id} no tiene formato valido")
 
-    delete_result = entradas.delete_one({"_id": ObjectId(id)})
+    try:
+        delete_result = entradas.delete_one({"_id": ObjectId(id)})
+    except Exception as e:
+        raise HTTPException(
+            status_code=400, detail=f"Error al eliminar la entrada: {str(e)}"
+        )
 
     if delete_result.deleted_count == 1:
-        return Response(status_code=status.HTTP_204_NO_CONTENT)
+        raise HTTPException(status_code=204, detail="Entrada eliminada correctamente")
 
     raise HTTPException(status_code=404, detail=f"Entrada con ID {id} no encontrada")
 

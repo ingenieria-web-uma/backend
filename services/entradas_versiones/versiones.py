@@ -82,33 +82,25 @@ def create_version(version: VersionNew):
 
 
 # PUT /versiones/<id>
-@versiones_router.put("/{id}", response_model=Version)
-def update_version(id: str, version: VersionUpdate):
-    if not ObjectId.is_valid(id):
-        raise HTTPException(status_code=400, detail=f"ID {id} no tiene formato valido")
-
-    model = version.model_dump(by_alias=True, exclude_none=True)
-    if not model:
-        raise HTTPException(status_code=400, detail="Debe incluir alguna actualizacion")
-
+@versiones_router.put("/{id}")
+def update_version(id, datos: VersionUpdate):
     try:
-        if model["idUsuario"]:
-            model["idUsuario"] = ObjectId(version.idUsuario)
-        if model["idEntrada"]:
-            model["idEntrada"] = ObjectId(version.idEntrada)
+        idVersion = ObjectId(id)
+        filter = {"_id": idVersion}
+        version_existente = versiones.find_one(filter)
+        if not version_existente:
+            raise HTTPException(status_code=404, detail="Versión no encontada")
+
+        res = versiones.update_one(
+            filter, {"$set", datos.to_mongo_dict(exclude_none=True)}
+        )
+        if res:
+            raise HTTPException(
+                status_code=200, detail="Versión actualizada correctamente"
+            )
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Fallo al convertir IDs: {str(e)}")
-    model["fechaEdicion"] = version.fechaEdicion
-    result = versiones.find_one_and_update(
-        {"_id": ObjectId(id)},
-        {"$set": model},
-        return_document=pymongo.ReturnDocument.AFTER,
-    )
-    if result:
-        return result
-    else:
         raise HTTPException(
-            status_code=404, detail=f"Version con ID {id} no encontrada"
+            status_code=400, detail=f"Error al actualizar la versión: {str(e)}"
         )
 
 

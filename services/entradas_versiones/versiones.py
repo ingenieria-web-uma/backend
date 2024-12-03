@@ -92,12 +92,15 @@ def update_version(id, datos: VersionUpdate):
             raise HTTPException(status_code=404, detail="Versión no encontada")
 
         res = versiones.update_one(
-            filter, {"$set", datos.to_mongo_dict(exclude_none=True)}
+            filter, {"$set": datos.to_mongo_dict(exclude_none=True)}
         )
-        if res:
+
+        if res.modified_count == 0:
             raise HTTPException(
-                status_code=200, detail="Versión actualizada correctamente"
+                status_code=404, detail="Versión no modificada"
             )
+
+        return {"message": "Versión actualizada correctamente"}
     except Exception as e:
         raise HTTPException(
             status_code=400, detail=f"Error al actualizar la versión: {str(e)}"

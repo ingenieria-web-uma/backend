@@ -19,14 +19,17 @@ class WikiFilter(BaseModel):
 class Wiki(BaseModel, MongoBase):
     id: PydanticObjectId = Field(alias="_id")
     nombre: str
+    imagenUrl: str
 
 
 class WikiUpdate(BaseModel, MongoBase):
     nombre: str
+    imagenUrl: str
 
 
 class WikiNew(BaseModel, MongoBase):
     nombre: str
+    imagenUrl: str
 
 
 class WikiList(BaseModel, MongoBase):

@@ -4,7 +4,10 @@ import pymongo
 import requests
 from bson.objectid import ObjectId
 from dotenv import load_dotenv
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
+import cloudinary
+import cloudinary.uploader
+from models.archivo import ArchivoNew
 
 from models.wiki import Wiki, WikiFilter, WikiList, WikiNew, WikiUpdate
 
@@ -49,15 +52,15 @@ def get_wikis_byId(id: str):
 
 
 @wikis_bp.post("/", response_model=Wiki)
-def create_wiki(wiki: WikiNew):
+async def create_wiki(wiki: WikiNew): 
     try:
         wiki_dump = wiki.model_dump()
         wiki_id = wikis.insert_one(wiki_dump).inserted_id
         return wikis.find_one({"_id": wiki_id})
+
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error al crear la wiki: {str(e)}")
-
-
+    
 # PUT /wikis/<id>
 
 

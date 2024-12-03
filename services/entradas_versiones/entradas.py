@@ -7,8 +7,8 @@ from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 
 from models.comentario import ComentarioList
-from models.entrada import (Entrada, EntradaFiltro, EntradaList, EntradaNew,
-                            EntradaUpdate)
+from models.entrada import (EntradaId, Entrada, EntradaFiltro, EntradaList,
+                            EntradaNew, EntradaUpdate)
 from models.wiki import Wiki
 
 load_dotenv()
@@ -51,15 +51,16 @@ def get_entry_by_id(id: str):
 
 
 # POST /entradas
-@entradas_router.post("/")
+@entradas_router.post("/", response_model=EntradaId, status_code=201)
 def create_entry(entrada: EntradaNew):
     try:
-        entradas.insert_one(entrada.to_mongo_dict(exclude_none=True))
+        entrada_dump = entrada.to_mongo_dict(exclude_none=True)
+        entrada_id = entradas.insert_one(entrada_dump).inserted_id
+        return EntradaId(idEntrada=str(entrada_id))
     except Exception as e:
         raise HTTPException(
             status_code=400, detail=f"Error al crear la entrada: {str(e)}"
         )
-    raise HTTPException(status_code=201, detail="Entrada creada correctamente")
 
 
 # PUT /entradas/<id>

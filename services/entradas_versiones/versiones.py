@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from fastapi import APIRouter, HTTPException, Response, status
 from datetime import datetime
 
-from models.version import Version, VersionList, VersionNew, VersionUpdate
+from models.version import VersionId, Version, VersionList, VersionNew, VersionUpdate
 
 load_dotenv()
 MONGO_URL = os.getenv("MONGO_URL")
@@ -69,17 +69,16 @@ def get_versions_byId(id: str):
 
 
 # POST /versiones
-@versiones_router.post("/", response_model=Version, status_code=status.HTTP_201_CREATED)
+@versiones_router.post("/", response_model=VersionId, status_code=201)
 def create_version(version: VersionNew):
-    model = version.model_dump(by_alias=True)
     try:
-        model["idUsuario"] = ObjectId(version.idUsuario)
-        model["idEntrada"] = ObjectId(version.idEntrada)
+        version_dump = version.to_mongo_dict(exclude_none=True)
+        version_id = versiones.insert_one(version_dump).inserted_id
+        return VersionId(idVersion=str(version_id))
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Fallo al convertir IDs: {str(e)}")
-    model["fechaEdicion"] = version.fechaEdicion
-    result = versiones.insert_one(model)
-    return versiones.find_one({"_id": result.inserted_id})
+        raise HTTPException(
+            status_code=400, detail=f"Error al crear la versión: {str(e)}"
+        )
 
 
 # PUT /versiones/<id>

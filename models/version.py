@@ -1,11 +1,17 @@
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel, Field, PrivateAttr
+from pydantic import BaseModel, Field
 from pydantic_mongo import PydanticObjectId
 
+from models.baseMongo import MongoBase
 
-class Version(BaseModel):
+
+class VersionId(BaseModel, MongoBase):
+    idVersion: PydanticObjectId
+
+
+class Version(BaseModel, MongoBase):
     id: PydanticObjectId = Field(alias="_id")
     idUsuario: PydanticObjectId
     idEntrada: PydanticObjectId
@@ -13,27 +19,19 @@ class Version(BaseModel):
     fechaEdicion: datetime = Field(default_factory=datetime.now)
 
 
-class VersionUpdate(BaseModel):
-    idUsuario: Optional[PydanticObjectId] = None
-    idEntrada: Optional[PydanticObjectId] = None
-    contenido: Optional[str] = None
-    _fechaEdicion: datetime = PrivateAttr(default_factory=datetime.now)
-
-    @property
-    def fechaEdicion(self):
-        return self._fechaEdicion
-
-
-class VersionNew(BaseModel):
+class VersionNew(BaseModel, MongoBase):
     idUsuario: PydanticObjectId
     idEntrada: PydanticObjectId
     contenido: str
-    _fechaEdicion: datetime = PrivateAttr(default_factory=datetime.now)
-
-    @property
-    def fechaEdicion(self):
-        return self._fechaEdicion
+    fechaEdicion: datetime = Field(default_factory=datetime.now)
 
 
-class VersionList(BaseModel):
+class VersionUpdate(BaseModel, MongoBase):
+    idUsuario: Optional[PydanticObjectId] = None
+    idEntrada: Optional[PydanticObjectId] = None
+    contenido: Optional[str] = None
+    fechaEdicion: datetime = Field(default_factory=datetime.now)
+
+
+class VersionList(BaseModel, MongoBase):
     versiones: List[Version]

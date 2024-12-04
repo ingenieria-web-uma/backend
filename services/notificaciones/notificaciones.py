@@ -144,6 +144,13 @@ async def update_notification(notification_id: str, update_data: NotificationUpd
     )  # Convertir ObjectId a string
     return Notification(**updated_notification)
 
+#Eliminar todas las notificaciones. ESTE METODO SE BORRARÁ CUANDO HAYA AUTENTICACION
+@notificaciones_bp.delete("/", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_all_notifications():
+    result = notificaciones.delete_many({})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="No se encontraron notificaciones")
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 # Eliminar Notificación (DELETE)
 @notificaciones_bp.delete("/{notification_id}", status_code=status.HTTP_204_NO_CONTENT)

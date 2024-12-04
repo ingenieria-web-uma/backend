@@ -7,8 +7,9 @@ from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 
 from models.comentario import ComentarioList
-from models.entrada import (EntradaId, Entrada, EntradaFiltro, EntradaList,
+from models.entrada import (Entrada, EntradaFiltro, EntradaId, EntradaList,
                             EntradaNew, EntradaUpdate)
+from models.version import Version
 from models.wiki import Wiki
 
 load_dotenv()
@@ -19,6 +20,7 @@ entradas_router = APIRouter(prefix="/v2/entradas", tags=["entradas"])
 # Configuración de MongoDB
 db = pymongo.MongoClient(MONGO_URL).laWikiv2
 entradas = db.entradas
+versiones = db.versiones
 
 
 # GET /entradas
@@ -191,4 +193,19 @@ def get_comentarios_for_entry(id: str):
     except Exception as e:
         raise HTTPException(
             status_code=400, detail=f"Error al buscar los comentarios: {str(e)}"
+        )
+
+
+# GET ultima version de una entrada
+@entradas_router.get("/{id}/last-version")
+def get_last_version_of_entry(id: str):
+    try:
+        version = versiones.find_one({"idEntrada": ObjectId(id)}, sort=[("fechaEdicion", pymongo.DESCENDING)])
+        if version:
+            return Version(**version).model_dump()
+        else:
+            raise HTTPException(status_code=404, detail="Version no encontrada")
+    except Exception as e:
+        raise HTTPException(
+            status_code=400, detail=f"Error al buscar la version: {str(e)}"
         )

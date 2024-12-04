@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from fastapi import APIRouter, HTTPException
 from cachetools import TTLCache
 
-from models.mapa import Mapa, MapaNew, MapaUpdate
+from models.mapa import MapaId, Mapa, MapaNew, MapaUpdate
 
 load_dotenv()
 MONGO_URL = os.getenv("MONGO_URL")
@@ -19,8 +19,8 @@ mapas = db.mapas
 cache = TTLCache(maxsize=100, ttl=3600)
 
 
-@mapas_bp.get("")
-def get_mapas_por_query_o_coords(q: str = None, lat: float = None, lon: float = None):
+@mapas_bp.get("/")
+def get_mapas_por_query_o_coords(q: str = None, lat: str = None, lon: str = None):
     if q:
         if q in cache:
             return {"source": "cache", "data": cache[q]}
@@ -111,7 +111,8 @@ def get_mapa_por_entrada(idEntrada):
 def create_mapa(mapa: MapaNew):
     try:
         mapa_data = mapa.to_mongo_dict(exclude_none=True)
-        mapas.insert_one(mapa_data)
+        mapa_id = mapas.insert_one(mapa_data).inserted_id
+        return MapaId(idMapa=str(mapa_id))
     except Exception as e:
         raise HTTPException(
             status_code=400, detail=f"Error al crerar el mapa: {str(e)}"

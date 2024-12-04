@@ -12,21 +12,22 @@ class MapaId(BaseModel, MongoBase):
 class Mapa(BaseModel, MongoBase):
     id: PydanticObjectId = Field(alias="_id")
     idEntrada: PydanticObjectId
-    lat: float
-    lon: float
+    lat: str
+    lon: str
     zoom: int
 
 
 class MapaNew(BaseModel, MongoBase):
     idEntrada: PydanticObjectId
-    lat: float
-    lon: float
+    lat: str
+    lon: str
     zoom: int
 
 
 class MapaUpdate(BaseModel, MongoBase):
-    lat: Optional[float] = None
-    lon: Optional[float] = None
+    idEntrada: Optional[PydanticObjectId] = None
+    lat: Optional[str] = None
+    lon: Optional[str] = None
     zoom: Optional[int] = None
 
 

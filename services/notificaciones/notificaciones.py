@@ -27,7 +27,7 @@ SERVICE_USUARIOS_PORT = os.getenv("SERVICE_USUARIOS_PORT")
 ENDPOINT_USUARIOS = os.getenv("ENDPOINT_USUARIOS")
 
 if os.getenv("DOCKER"):
-    USER_SERVICE_URL = "https://gateway:8000/notificaciones"
+    USER_SERVICE_URL = "https://gateway:8000/usuarios"
 else:
     USER_SERVICE_URL = f"http://localhost:{SERVICE_USUARIOS_PORT}/{ENDPOINT_USUARIOS}"
 
@@ -171,3 +171,17 @@ async def get_user(user_id: str):
             status_code=500,
             detail=f"Error al conectar con el servicio de usuarios: {str(e)}",
         )
+
+##Eliminar todas las notificaciones de un usuario
+@notificaciones_bp.delete("/usuario/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_user_notifications(user_id: str):
+    result = notificaciones.delete_many({"user_id": user_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Notificaciones no encontradas")
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+#Contar notificaciones de un usuario sin leer
+@notificaciones_bp.get("/usuario/{user_id}/count")
+async def count_unread_notifications(user_id: str):
+    count = notificaciones.count_documents({"user_id": user_id, "is_read": False})
+    return {"count": count}

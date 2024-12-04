@@ -79,7 +79,7 @@ def update_entry(id: str, entrada: EntradaUpdate):
 
     update_result = entradas.find_one_and_update(
         {"_id": ObjectId(id)},
-        {"$set": entrada.model_dump(by_alias=True, exclude_none=True)},
+        {"$set": entrada.to_mongo_dict(exclude_none=True)},
         return_document=pymongo.ReturnDocument.AFTER,
     )
     if update_result is not None:

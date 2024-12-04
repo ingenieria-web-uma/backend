@@ -5,12 +5,8 @@ from bson.objectid import ObjectId
 from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, HTTPException
 
-from models.comentario import (
-    ComentarioFilter,
-    ComentarioList,
-    ComentarioNew,
-    ComentarioUpdate,
-)
+from models.comentario import (Comentario, ComentarioFilter, ComentarioList,
+                               ComentarioNew, ComentarioUpdate)
 from models.entrada import EntradaId
 
 load_dotenv()
@@ -31,7 +27,7 @@ comentarios = db.comentarios
 @comentarios_bp.get("/")
 def view_comments(filtro: ComentarioFilter = Depends()):
     filter = filtro.to_mongo_dict(exclude_none=True)
-    comentarios_data = comentarios.find(filter)
+    comentarios_data = comentarios.find(filter).sort("fechaCreacion", pymongo.DESCENDING)
     return ComentarioList(
         comentarios=[comentario for comentario in comentarios_data]
     ).model_dump(exclude_none=True)
@@ -41,12 +37,14 @@ def view_comments(filtro: ComentarioFilter = Depends()):
 @comentarios_bp.post("/")
 def create_comments(nuevoComentario: ComentarioNew):
     try:
-        comentarios.insert_one(nuevoComentario.to_mongo_dict(exclude_none=True))
+        res = comentarios.insert_one(nuevoComentario.to_mongo_dict(exclude_none=True))
+        if res.inserted_id:
+            return Comentario(_id=res.inserted_id, **nuevoComentario.model_dump()).model_dump()
+
     except Exception as e:
         raise HTTPException(
             status_code=400, detail=f"Error al crear el comentario: {str(e)}"
         )
-    raise HTTPException(status_code=201, detail="Comentario creado correctamente")
 
 
 # DELETE /comentarios

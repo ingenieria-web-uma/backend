@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from fastapi import APIRouter, HTTPException
 from cachetools import TTLCache
 
-from models.mapa import MapInfo, MapListResponse
+from models.mapa import Mapa, MapaNew, MapaUpdate
 
 load_dotenv()
 MONGO_URL = os.getenv("MONGO_URL")
@@ -79,57 +79,74 @@ def get_mapas_por_query_o_coords(q: str = None, lat: float = None, lon: float = 
         )
 
 
-@mapas_bp.get("/entrada/{idEntrada}", response_model=MapListResponse)
-def get_mapas_por_entrada(idEntrada: str):
-    mapas_cursor = mapas.find({"idEntrada": ObjectId(idEntrada)})
-    mapas_entrada = [MapInfo(**m) for m in mapas_cursor]
-    return MapListResponse(mapas=mapas_entrada)
+@mapas_bp.get("/{id}", response_model=Mapa)
+def get_mapa_por_id(id):
+    try:
+        mapa = mapas.find_one({"_id": ObjectId(id)})
+        if not mapa:
+            raise HTTPException(status_code=404, detail="Mapa no encontrado")
+
+        return mapa
+    except Exception as e:
+        raise HTTPException(
+            status_code=400, detail=f"Error al buscar el mapa: {str(e)}"
+        )
 
 
-@mapas_bp.get("/{idMapa}/entrada/{idEntrada}", response_model=MapInfo)
-def get_mapa_por_id(idMapa: str, idEntrada: str):
-    mapa = mapas.find_one({"_id": ObjectId(idMapa), "idEntrada": ObjectId(idEntrada)})
-    if not mapa:
-        raise HTTPException(status_code=404, detail="Mapa no encontrado")
-    return MapInfo(**mapa)
+@mapas_bp.get("/{idEntrada}", response_model=Mapa)
+def get_mapa_por_entrada(idEntrada):
+    try:
+        mapa = mapas.find_one({"idEntrada": ObjectId(idEntrada)})
+        if not mapa:
+            raise HTTPException(status_code=404, detail="Mapa no encontrado")
+
+        return mapa
+    except Exception as e:
+        raise HTTPException(
+            status_code=400, detail=f"Error al buscar el mapa: {str(e)}"
+        )
 
 
-@mapas_bp.post("/entrada/{idEntrada}", response_model=MapInfo)
-def add_mapa_a_entrada(idEntrada: str, mapa: MapInfo):
-    mapa_data = mapa.model_dump(exclude_unset=True, by_alias=True)
-    mapa_data["idEntrada"] = ObjectId(idEntrada)
-    result = mapas.insert_one(mapa_data)
-    mapa_data["_id"] = result.inserted_id
-    return MapInfo(**mapa_data)
+@mapas_bp.post("/")
+def create_mapa(mapa: MapaNew):
+    try:
+        mapa_data = mapa.to_mongo_dict(exclude_none=True)
+        mapas.insert_one(mapa_data)
+    except Exception as e:
+        raise HTTPException(
+            status_code=400, detail=f"Error al crerar el mapa: {str(e)}"
+        )
 
 
-@mapas_bp.put("/{idMapa}/entrada/{idEntrada}", response_model=MapInfo)
-def update_mapa(idMapa: str, idEntrada: str, mapa: MapInfo):
-    existing_mapa = mapas.find_one(
-        {"_id": ObjectId(idMapa), "idEntrada": ObjectId(idEntrada)}
-    )
-    if not existing_mapa:
-        raise HTTPException(status_code=404, detail="Mapa no encontrado")
+@mapas_bp.put("/{id}")
+def update_mapa(id, mapa: MapaUpdate):
+    try:
+        filter = {"_id": ObjectId(id)}
+        mapa_existente = mapas.find_one(filter)
+        if not mapa_existente:
+            raise HTTPException(status_code=404, detail="Mapa no encontrado")
 
-    mapa_data = mapa.model_dump(exclude_unset=True, by_alias=True)
-    result = mapas.update_one(
-        {"_id": ObjectId(idMapa), "idEntrada": ObjectId(idEntrada)}, {"$set": mapa_data}
-    )
+        res = mapas.update_one(filter, {"$set": mapa.to_mongo_dict(exclude_none=True)})
 
-    if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="No se pudo actualizar el mapa")
+        if res.modified_count == 0:
+            raise HTTPException(status_code=404, detail="No se pudo actualizar el mapa")
 
-    updated_mapa = mapas.find_one(
-        {"_id": ObjectId(idMapa), "idEntrada": ObjectId(idEntrada)}
-    )
-    return MapInfo(**updated_mapa)
+        return {"message": "Mapa actualizado correctamente"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=400, detail=f"Error al actualizar el mapa: {str(e)}"
+        )
 
 
-@mapas_bp.delete("/{idMapa}/entrada/{idEntrada}", response_model=dict)
-def delete_mapa(idMapa: str, idEntrada: str):
-    result = mapas.delete_one(
-        {"_id": ObjectId(idMapa), "idEntrada": ObjectId(idEntrada)}
-    )
-    if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Mapa no encontrado")
-    return {"message": f"Mapa con ID {idMapa} eliminado de la entrada {idEntrada}"}
+@mapas_bp.delete("/{id}")
+def delete_mapa(id):
+    try:
+        res = mapas.delete_one({"_id": ObjectId(id)})
+        if res.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Mapa no encontrado")
+
+        return {"message": f"Mapa con ID {id} eliminado"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=400, detail=f"Error al eliminar el mapa: {str(e)}"
+        )

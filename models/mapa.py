@@ -1,37 +1,34 @@
-from pydantic import BaseModel, field_validator, model_validator
-from typing import List
+from typing import List, Optional
+from pydantic import BaseModel, Field
+from pydantic_mongo import PydanticObjectId
+
+from models.baseMongo import MongoBase
 
 
-class MapInfo(BaseModel):
+class MapaId(BaseModel, MongoBase):
+    idMapa: PydanticObjectId
+
+
+class Mapa(BaseModel, MongoBase):
+    id: PydanticObjectId = Field(alias="_id")
+    idEntrada: PydanticObjectId
     lat: float
     lon: float
     zoom: int
 
-    @field_validator("zoom", mode="before")
-    def validate_zoom(cls, value):
-        if not isinstance(value, int):
-            raise TypeError("El nivel de zoom debe ser un número entero.")
-        return value
 
-    @model_validator(mode="before")
-    def validate_lat_lon(cls, values):
-        lat = values.get("lat")
-        lon = values.get("lon")
-        if lat is None or lon is None:
-            raise ValueError("Ambos campos 'lat' y 'lon' son obligatorios.")
-        return values
+class MapaNew(BaseModel, MongoBase):
+    idEntrada: PydanticObjectId
+    lat: float
+    lon: float
+    zoom: int
 
 
-class MapListResponse(BaseModel):
-    mapas: List[MapInfo]
+class MapaUpdate(BaseModel, MongoBase):
+    lat: Optional[float] = None
+    lon: Optional[float] = None
+    zoom: Optional[int] = None
 
-    @field_validator("mapas", mode="before")
-    def validate_map_list(cls, value):
-        if not isinstance(value, list):
-            raise TypeError("El campo 'mapas' debe ser una lista.")
-        for item in value:
-            if not isinstance(item, MapInfo):
-                raise TypeError(
-                    "Cada elemento en 'mapas' debe ser una instancia válida de MapInfo."
-                )
-        return value
+
+class MapaList(BaseModel):
+    mapas: List[Mapa]

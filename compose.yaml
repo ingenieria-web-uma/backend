@@ -3,6 +3,8 @@ name: lawiki
 x-backend: &backend
   env_file:
     - .env
+  environment:
+    - TZ=Europe/Madrid
 
 services:
   frontend:
@@ -10,6 +12,7 @@ services:
       context: ../frontend
     environment:
       NODE_ENV: production
+      TZ: Europe/Madrid
     container_name: frontend
     ports:
       - 4200:4200

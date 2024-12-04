@@ -3,6 +3,8 @@ name: lawiki
 x-backend: &backend
   env_file:
     - .env
+  environment:
+    - TZ=Europe/Madrid
 
 services:
   gateway:

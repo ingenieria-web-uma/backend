@@ -1,5 +1,6 @@
 import os
 
+import httpx
 import pymongo
 import requests
 from bson.objectid import ObjectId
@@ -21,6 +22,14 @@ entradas_router = APIRouter(prefix="/v2/entradas", tags=["entradas"])
 db = pymongo.MongoClient(MONGO_URL).laWikiv2
 entradas = db.entradas
 versiones = db.versiones
+
+SERVICE_NOTIFICACIONES_PORT = os.getenv("SERVICE_NOTIFICACIONES_PORT")
+ENDPOINT_NOTIFICACIONES = os.getenv("ENDPOINT_NOTIFICACIONES")
+
+if os.getenv("DOCKER"):
+    NOTIFICACIONES_SERVICE_URL = "http://gateway:8000/notificaciones"
+else:
+    NOTIFICACIONES_SERVICE_URL = f"http://localhost:{SERVICE_NOTIFICACIONES_PORT}/{ENDPOINT_NOTIFICACIONES}"
 
 
 # GET /entradas
@@ -76,7 +85,12 @@ def update_entry(id: str, entrada: EntradaUpdate):
             status_code=400,
             detail=f"Ya existe una entrada con el nombre {entrada.nombre}",
         )
-
+    ##enviar notificacion de que se ha actualizado una entrada
+    entrada = entradas.find_one({"_id": ObjectId(id)})
+    entradaModel = Entrada(**entrada).model_dump()
+    user_id = entradaModel["idUsuario"]
+    message = f"Se ha actualizado la entrada: {entradaModel['nombre']}"
+    response =  send_notification(user_id, message, id)
     update_result = entradas.find_one_and_update(
         {"_id": ObjectId(id)},
         {"$set": entrada.to_mongo_dict(exclude_none=True)},
@@ -92,11 +106,17 @@ def update_entry(id: str, entrada: EntradaUpdate):
 
 # DELETE /entradas/<id>
 @entradas_router.delete("/{id}")
-def delete_entry(id: str):
+async def delete_entry(id: str):
     if not ObjectId.is_valid(id):
         raise HTTPException(status_code=400, detail=f"ID {id} no tiene formato valido")
 
     try:
+        #enviar notificacion de que se ha eliminado una entrada
+        entrada = entradas.find_one({"_id": ObjectId(id)})
+        entradaModel = Entrada(**entrada).model_dump()
+        user_id = entradaModel["idUsuario"]
+        message = f"Se ha eliminado la entrada: {entradaModel['nombre']}"
+        response =  send_notification(user_id, message, id)
         delete_result = entradas.delete_one({"_id": ObjectId(id)})
     except Exception as e:
         raise HTTPException(
@@ -132,6 +152,7 @@ def delete_entries_by_wiki(idWiki: str):
             requests.delete(f"{url_base}/versiones?idEntrada={id}")
             # eliminamos la entrada
             requests.delete(f"{url_base}/entradas/{id}")
+            ##enviar notificacion de que se ha eliminado una entrada
     except Exception as e:
         raise HTTPException(
             status_code=400, detail=f"Error al buscar las entradas: {str(e)}"
@@ -208,4 +229,20 @@ def get_last_version_of_entry(id: str):
     except Exception as e:
         raise HTTPException(
             status_code=400, detail=f"Error al buscar la version: {str(e)}"
+        )
+
+#Enviar notificacion
+
+def send_notification(user_id: str, message: str, entrada_id: str):
+    try:
+        response = requests.post(
+            f"{NOTIFICACIONES_SERVICE_URL}",
+            json={"user_id": user_id, "message": message, "entrada_id": entrada_id},
+            timeout=10  # Configura un timeout razonable
+        )
+        response.raise_for_status()  # Lanza excepción si hay error HTTP
+        print("Notificación enviada:", response.status_code)
+    except requests.RequestException as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error al enviar la notificación: {str(e)}"
         )

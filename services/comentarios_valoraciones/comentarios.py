@@ -4,6 +4,7 @@ import pymongo
 from bson.objectid import ObjectId
 from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, HTTPException
+import requests
 
 from models.comentario import (Comentario, ComentarioFilter, ComentarioList,
                                ComentarioNew, ComentarioUpdate)
@@ -13,6 +14,15 @@ load_dotenv()
 MONGO_URL = os.getenv("MONGO_URL")
 
 comentarios_bp = APIRouter(prefix="/v2/comentarios", tags=["comentarios"])
+
+
+SERVICE_NOTIFICACIONES_PORT = os.getenv("SERVICE_NOTIFICACIONES_PORT")
+ENDPOINT_NOTIFICACIONES = os.getenv("ENDPOINT_NOTIFICACIONES")
+
+if os.getenv("DOCKER"):
+    NOTIFICACIONES_SERVICE_URL = "http://gateway:8000/notificaciones"
+else:
+    NOTIFICACIONES_SERVICE_URL = f"http://localhost:{SERVICE_NOTIFICACIONES_PORT}/{ENDPOINT_NOTIFICACIONES}"
 
 
 # Configuración de MongoDB
@@ -37,6 +47,12 @@ def view_comments(filtro: ComentarioFilter = Depends()):
 @comentarios_bp.post("/")
 def create_comments(nuevoComentario: ComentarioNew):
     try:
+        ## Enviar notificación
+        nuevoComentariomodel = nuevoComentario.model_dump()
+        user_id = nuevoComentariomodel.idUsuario
+        message = f"Nuevo comentario: {nuevoComentariomodel.contenido}"
+        entrada_id = nuevoComentariomodel.idEntrada
+        send_notification(user_id, message, entrada_id)
         res = comentarios.insert_one(nuevoComentario.to_mongo_dict(exclude_none=True))
         if res.inserted_id:
             return Comentario(_id=res.inserted_id, **nuevoComentario.model_dump()).model_dump()
@@ -103,3 +119,18 @@ def update_comments(id, newEntrada: ComentarioUpdate):
         raise HTTPException(status_code=404, detail="Comentario no encontrado")
 
     raise HTTPException(status_code=200, detail="Comentario actualizado correctamente")
+
+#Enviar notificacion
+def send_notification(user_id: str, message: str, entrada_id: str):
+    try:
+        response = requests.post(
+            f"{NOTIFICACIONES_SERVICE_URL}",
+            json={"user_id": user_id, "message": message, "entrada_id": entrada_id},
+            timeout=10  # Configura un timeout razonable
+        )
+        response.raise_for_status()  # Lanza excepción si hay error HTTP
+        print("Notificación enviada:", response.status_code)
+    except requests.RequestException as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error al enviar la notificación: {str(e)}"
+        )

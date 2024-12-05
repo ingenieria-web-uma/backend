@@ -27,7 +27,7 @@ SERVICE_USUARIOS_PORT = os.getenv("SERVICE_USUARIOS_PORT")
 ENDPOINT_USUARIOS = os.getenv("ENDPOINT_USUARIOS")
 
 if os.getenv("DOCKER"):
-    USER_SERVICE_URL = "https://gateway:8000/usuarios"
+    USER_SERVICE_URL = "http://gateway:8000/usuarios"
 else:
     USER_SERVICE_URL = f"http://localhost:{SERVICE_USUARIOS_PORT}/{ENDPOINT_USUARIOS}"
 

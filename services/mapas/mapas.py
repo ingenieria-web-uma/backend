@@ -93,13 +93,12 @@ def get_mapa_por_id(id):
         )
 
 
-@mapas_bp.get("/{idEntrada}", response_model=Mapa)
+@mapas_bp.get("/entrada/{idEntrada}", response_model=Mapa)
 def get_mapa_por_entrada(idEntrada):
     try:
         mapa = mapas.find_one({"idEntrada": ObjectId(idEntrada)})
         if not mapa:
             raise HTTPException(status_code=404, detail="Mapa no encontrado")
-
         return mapa
     except Exception as e:
         raise HTTPException(

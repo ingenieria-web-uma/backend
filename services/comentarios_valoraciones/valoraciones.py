@@ -28,7 +28,7 @@ valoraciones = db.valoraciones
 @valoraciones_bp.get("/")
 def get_evaluations(filtro: ValoracionFiltro = Depends()):
     try:
-        valoraciones_data = valoraciones.find(filtro.model_dump(exclude_none=True))
+        valoraciones_data = valoraciones.find(filtro.to_mongo_dict(exclude_none=True))
         return ValoracionList(
             valoraciones=[valoracion for valoracion in valoraciones_data]
         ).model_dump(exclude_none=True)

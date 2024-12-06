@@ -2,7 +2,7 @@ import re
 from enum import Enum
 from typing import List, Optional
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, EmailStr
 from pydantic_mongo import PydanticObjectId
 
 
@@ -15,7 +15,7 @@ class UserRole(str, Enum):
 class User(BaseModel):
     id: PydanticObjectId = Field(alias="_id")
     name: str
-    email: str
+    email: EmailStr 
     password: str
     role: UserRole
     wants_emails: bool
@@ -30,7 +30,7 @@ class User(BaseModel):
 
 class UserUpdate(BaseModel):
     name: Optional[str] = None
-    email: Optional[str] = None
+    email: Optional[EmailStr] = None
     password: Optional[str] = None
     role: Optional[UserRole] = None
     wants_emails: bool
@@ -45,7 +45,7 @@ class UserUpdate(BaseModel):
 
 class UserNew(BaseModel):
     name: str
-    email: str
+    email: EmailStr
     password: str
     role: UserRole
     wants_emails: bool = Field(default=True)
@@ -60,3 +60,7 @@ class UserNew(BaseModel):
 
 class UserList(BaseModel):
     users: List[User]
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str

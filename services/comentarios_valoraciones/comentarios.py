@@ -1,10 +1,10 @@
 import os
 
 import pymongo
+import requests
 from bson.objectid import ObjectId
 from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, HTTPException
-import requests
 
 from models.comentario import (Comentario, ComentarioFilter, ComentarioList,
                                ComentarioNew, ComentarioUpdate)
@@ -48,12 +48,12 @@ def view_comments(filtro: ComentarioFilter = Depends()):
 def create_comments(nuevoComentario: ComentarioNew):
     try:
         ## Enviar notificación
-        nuevoComentariomodel = nuevoComentario.model_dump()
-        user_id = nuevoComentariomodel.idUsuario
-        message = f"Nuevo comentario: {nuevoComentariomodel.contenido}"
-        entrada_id = nuevoComentariomodel.idEntrada
-        send_notification(user_id, message, entrada_id)
+        user_id = nuevoComentario.idUsuario
+        message = f"Nuevo comentario: {nuevoComentario.contenido}"
+        entrada_id = nuevoComentario.idEntrada
+        # send_notification(user_id, message, entrada_id)
         res = comentarios.insert_one(nuevoComentario.to_mongo_dict(exclude_none=True))
+        print(res.inserted_id)
         if res.inserted_id:
             return Comentario(_id=res.inserted_id, **nuevoComentario.model_dump()).model_dump()
 

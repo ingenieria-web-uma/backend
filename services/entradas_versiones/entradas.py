@@ -87,9 +87,10 @@ def update_entry(id: str, entrada: EntradaUpdate):
         )
     ##enviar notificacion de que se ha actualizado una entrada
     entrada = entradas.find_one({"_id": ObjectId(id)})
-    entradaModel = Entrada(**entrada).model_dump()
-    user_id = entradaModel["idUsuario"]
-    message = f"Se ha actualizado la entrada: {entradaModel['nombre']}"
+    entrada = Entrada(**entrada)
+    entradaJson = entrada.model_dump()
+    user_id = entradaJson["idUsuario"]
+    message = f"Se ha actualizado la entrada: {entrada.nombre}"
     response =  send_notification(user_id, message, id)
     update_result = entradas.find_one_and_update(
         {"_id": ObjectId(id)},

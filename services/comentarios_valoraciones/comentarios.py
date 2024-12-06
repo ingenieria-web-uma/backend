@@ -48,10 +48,11 @@ def view_comments(filtro: ComentarioFilter = Depends()):
 def create_comments(nuevoComentario: ComentarioNew):
     try:
         ## Enviar notificación
-        user_id = nuevoComentario.idUsuario
-        message = f"Nuevo comentario: {nuevoComentario.contenido}"
-        entrada_id = nuevoComentario.idEntrada
-        # send_notification(user_id, message, entrada_id)
+        comentarioModel = nuevoComentario.model_dump()
+        user_id = comentarioModel["idUsuario"]
+        message = f"Nuevo comentario: {comentarioModel['contenido']}"
+        entrada_id = comentarioModel["idEntrada"]
+        send_notification(user_id, message, entrada_id)
         res = comentarios.insert_one(nuevoComentario.to_mongo_dict(exclude_none=True))
         print(res.inserted_id)
         if res.inserted_id:

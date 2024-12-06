@@ -3,8 +3,9 @@ from bson import ObjectId
 from fastapi import APIRouter, HTTPException
 from pymongo import MongoClient
 from dotenv import load_dotenv
-from models.user import User, UserList, UserNew, UserUpdate
+from models.user import User, UserList, UserNew, UserUpdate, UserRegister
 from typing import Optional
+from auth import get_password_hash
 import os
 
 load_dotenv()
@@ -17,6 +18,24 @@ usuarios_router = APIRouter(prefix="/v2/usuarios", tags=["usuarios"])
 client = MongoClient(MONGO_URL)
 db = client.laWikiv2
 usuarios = db.usuarios
+
+#REGISTER
+@usuarios_router.post("/register", response_model=User)
+def register_user(user: UserRegister):
+    hashed_password = get_password_hash(user.password)
+    print(hashed_password)
+    user_dict = user.model_dump()
+    user_dict["password"] = hashed_password
+    try:
+        result = usuarios.insert_one(user_dict)
+        new_user = usuarios.find_one({"_id": result.inserted_id})
+        new_user["_id"] = str(new_user["_id"])
+        print(new_user)
+        return User(**new_user)
+    except Exception as e:
+        raise HTTPException(
+            status_code=400, detail=f"Error al registrar el usuario: {str(e)}"
+        )
 
 
 # GET /usuarios

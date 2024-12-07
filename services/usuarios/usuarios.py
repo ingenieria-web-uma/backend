@@ -19,7 +19,7 @@ client = MongoClient(MONGO_URL)
 db = client.laWikiv2
 usuarios = db.usuarios
 
-#REGISTER
+#POST /usuarios/register
 @usuarios_router.post("/register", response_model=User)
 def register_user(user: UserRegister):
     hashed_password = get_password_hash(user.password)

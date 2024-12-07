@@ -5,6 +5,7 @@ import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.responses import Response
 
 load_dotenv()
 
@@ -58,10 +59,11 @@ async def gateway(request: Request, service: str, path: str):
                 headers=request.headers.raw,
                 content=await request.body(),
             )
-            if response.status_code == 204:
-                return {"message": "Operación realizada con éxito, sin contenido"}
-            else:
-                return response.json()
+            return Response(
+                content=response.content,
+                status_code=response.status_code,
+                headers=dict(response.headers),
+            )
         except httpx.HTTPError as e:
             raise HTTPException(status_code=500, detail=str(e))
 

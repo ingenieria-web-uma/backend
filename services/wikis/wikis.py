@@ -4,10 +4,7 @@ import pymongo
 import requests
 from bson.objectid import ObjectId
 from dotenv import load_dotenv
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
-import cloudinary
-import cloudinary.uploader
-from models.archivo import ArchivoNew
+from fastapi import APIRouter, Depends, HTTPException
 
 from models.wiki import Wiki, WikiFilter, WikiList, WikiNew, WikiUpdate
 
@@ -26,8 +23,8 @@ wikis = db.wikis
 @wikis_bp.get("/")
 def get_wikis(filtro: WikiFilter = Depends()):
     try:
-        wikisRes = wikis.find(filtro.model_dump(exclude_none=True))
-        return WikiList(wikis=[wiki for wiki in wikisRes]).model_dump()
+        wikisRes = wikis.find(filtro.to_mongo_dict(exclude_none=True))
+        return WikiList(wikis=[wiki for wiki in wikisRes]).model_dump(exclude_none=True)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error al obtener las wikis, {e}")
 

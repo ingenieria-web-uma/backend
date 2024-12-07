@@ -1,13 +1,14 @@
-from typing import Annotated, Dict, List, Optional
+from typing import Annotated, List, Optional
 
+from fastapi import Query
 from pydantic import BaseModel, Field, field_validator
 from pydantic_mongo import PydanticObjectId
 
 from models.baseMongo import MongoBase
 
 
-class WikiFilter(BaseModel):
-    nombre: Annotated[Optional[Dict], Field(validate_default=True)] = None
+class WikiFilter(BaseModel, MongoBase):
+    nombre: Annotated[Optional[str], Field(validate_default=True)] = Query(None)
 
     @field_validator("nombre")
     def make_regex(cls, v):

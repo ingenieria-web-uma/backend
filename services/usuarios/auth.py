@@ -7,12 +7,18 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi.security import OAuth2PasswordBearer
 from fastapi import HTTPException, status, Depends, APIRouter
+from pymongo import MongoClient
 
 #CONFIGURACION DE JWT
 load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")
+
+# Configuración de MongoDB
+client = MongoClient(os.getenv("MONGO_URL"))
+db = client.laWikiv2
+usuarios = db.usuarios
 
 auth_router = APIRouter(prefix="/v3/auth", tags=["auth"])
 
@@ -25,12 +31,12 @@ def verify_password(plain_password, hashed_password):
 def get_password_hash(password):
     return pwd_context.hash(password)
 
-def get_user(db, email: str):
-    user = db.users.find_one({"email": email})
+def get_user(email: str):
+    user = usuarios.find_one({"email": email})
     return user
 
-def authenticate_user(db, username: str, password: str):
-    user = get_user(db, username)
+def authenticate_user(username: str, password: str):
+    user = get_user(username)
     if not user:
         return False
     if not verify_password(password, user["password"]):
@@ -55,9 +61,9 @@ def generate_token(username, password):
             detail="Invalid credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token_expires = timedelta(minutes=int(ACCESS_TOKEN_EXPIRE_MINUTES))
     access_token = create_access_token(
-        data={"sub": user["username"]}, expires_delta=access_token_expires
+        data={"sub": user["email"]}, expires_delta=access_token_expires
     )
     return access_token
 

@@ -1,11 +1,13 @@
 import json
 from bson import ObjectId
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pymongo import MongoClient
 from dotenv import load_dotenv
 from models.user import User, UserList, UserNew, UserUpdate, UserRegister
+from models.token import Token
 from typing import Optional
-from auth import get_password_hash
+from auth import get_password_hash, generate_token
+from fastapi.security import OAuth2PasswordRequestForm
 import os
 
 load_dotenv()
@@ -36,7 +38,14 @@ def register_user(user: UserRegister):
         raise HTTPException(
             status_code=400, detail=f"Error al registrar el usuario: {str(e)}"
         )
-
+    
+#POST /usuarios/login
+@usuarios_router.post("/login", response_model=Token)
+async def login_user(form_data: OAuth2PasswordRequestForm = Depends()):
+    print(form_data)
+    access_token = generate_token(form_data.username, form_data.password)
+    return Token(access_token=access_token, token_type="bearer")
+    
 
 # GET /usuarios
 @usuarios_router.get("/", response_model=UserList)

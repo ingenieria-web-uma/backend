@@ -1,0 +1,85 @@
+name: lawiki
+
+x-backend: &backend
+  env_file:
+    - .env
+  environment:
+    - TZ=Europe/Madrid
+
+services:
+  wikis:
+    <<: *backend
+    build:
+      context: .
+      args:
+        SERVICE_PATH: services/wikis
+        SERVICE_PORT: ${SERVICE_WIKIS_PORT}
+    container_name: wikis
+    ports:
+      - ${SERVICE_WIKIS_PORT}:${SERVICE_WIKIS_PORT}
+
+  entradas-versiones:
+    <<: *backend
+    build:
+      context: .
+      args:
+        SERVICE_PATH: services/entradas_versiones
+        SERVICE_PORT: ${SERVICE_ENTRADAS_PORT}
+    container_name: entradas_versiones
+    ports:
+      - ${SERVICE_ENTRADAS_PORT}:${SERVICE_ENTRADAS_PORT}
+
+  comentarios-valoraciones:
+    <<: *backend
+    build:
+      context: .
+      args:
+        SERVICE_PATH: services/comentarios_valoraciones
+        SERVICE_PORT: ${SERVICE_COMENTARIOS_PORT}
+    container_name: comentarios_valoraciones
+    ports:
+      - ${SERVICE_COMENTARIOS_PORT}:${SERVICE_COMENTARIOS_PORT}
+
+  usuarios:
+    <<: *backend
+    build:
+      context: .
+      args:
+        SERVICE_PATH: services/usuarios
+        SERVICE_PORT: ${SERVICE_USUARIOS_PORT}
+    container_name: usuarios
+    ports:
+      - ${SERVICE_USUARIOS_PORT}:${SERVICE_USUARIOS_PORT}
+
+  archivos:
+    <<: *backend
+    build:
+      context: .
+      args:
+        SERVICE_PATH: services/archivos
+        SERVICE_PORT: ${SERVICE_ARCHIVOS_PORT}
+    container_name: archivos
+    ports:
+      - ${SERVICE_ARCHIVOS_PORT}:${SERVICE_ARCHIVOS_PORT}
+
+  notificaciones:
+    <<: *backend
+    build:
+      context: .
+      args:
+        SERVICE_PATH: services/notificaciones
+        SERVICE_PORT: ${SERVICE_NOTIFICACIONES_PORT}
+    container_name: notificaciones
+    ports:
+      - ${SERVICE_NOTIFICACIONES_PORT}:${SERVICE_NOTIFICACIONES_PORT}
+
+  mapas:
+    <<: *backend
+    build:
+      context: .
+      args:
+        SERVICE_PATH: services/mapas
+        SERVICE_PORT: ${SERVICE_MAPAS_PORT}
+    container_name: mapas
+    ports:
+      - ${SERVICE_MAPAS_PORT}:${SERVICE_MAPAS_PORT}

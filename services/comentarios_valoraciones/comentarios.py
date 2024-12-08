@@ -52,7 +52,13 @@ def create_comments(nuevoComentario: ComentarioNew):
         user_id = comentarioModel["idUsuario"]
         message = f"Nuevo comentario: {comentarioModel['contenido']}"
         entrada_id = comentarioModel["idEntrada"]
-        send_notification(user_id, message, entrada_id)
+
+        entrada = requests.get(f"http://gateway:8000/entradas/{entrada_id}")
+        entrada = entrada.json()
+        usuario = entrada["idUsuario"]
+        if usuario != user_id:
+            send_notification(user_id, message, entrada_id)
+        
         res = comentarios.insert_one(nuevoComentario.to_mongo_dict(exclude_none=True))
         print(res.inserted_id)
         if res.inserted_id:
@@ -62,7 +68,6 @@ def create_comments(nuevoComentario: ComentarioNew):
         raise HTTPException(
             status_code=400, detail=f"Error al crear el comentario: {str(e)}"
         )
-
 
 # DELETE /comentarios
 @comentarios_bp.delete("/{id}")

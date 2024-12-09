@@ -8,6 +8,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 load_dotenv()
 
+port int = os.getenv("PORT", 8000)
+
 app = FastAPI()
 
 app.add_middleware(
@@ -65,4 +67,4 @@ async def gateway(request: Request, service: str, path: str):
 
 
 if __name__ == "__main__":
-    uvicorn.run("app:app", host="0.0.0.0", reload=True)
+    uvicorn.run("app:app", host="0.0.0.0", port=port, reload=True)

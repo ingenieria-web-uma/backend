@@ -11,10 +11,10 @@ from models.wiki import Wiki, WikiFilter, WikiList, WikiNew, WikiUpdate
 load_dotenv()
 MONGO_URL = os.getenv("MONGO_URL")
 
-wikis_bp = APIRouter(prefix="/v2/wikis", tags=["wikis"])
+wikis_bp = APIRouter(prefix="/v3/wikis", tags=["wikis"])
 
 client = pymongo.MongoClient(MONGO_URL)
-db = client.laWikiv2
+db = client.laWikiv3
 wikis = db.wikis
 
 # GET /wikis/
@@ -49,7 +49,7 @@ def get_wikis_byId(id: str):
 
 
 @wikis_bp.post("/", response_model=Wiki)
-async def create_wiki(wiki: WikiNew): 
+async def create_wiki(wiki: WikiNew):
     try:
         wiki_dump = wiki.model_dump()
         wiki_id = wikis.insert_one(wiki_dump).inserted_id
@@ -57,7 +57,8 @@ async def create_wiki(wiki: WikiNew):
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error al crear la wiki: {str(e)}")
-    
+
+
 # PUT /wikis/<id>
 
 
@@ -112,7 +113,7 @@ def get_entradas_byWiki(id: str):
             response = requests.get(f"http://gateway:8000/entradas?wiki={id}")
         else:
             response = requests.get(
-                f"http://127.0.0.1:{puertoServicio}/v2/entradas?wiki={id}"
+                f"http://127.0.0.1:{puertoServicio}/v3/entradas?wiki={id}"
             )
         if response.status_code == 200:
             return response.json()

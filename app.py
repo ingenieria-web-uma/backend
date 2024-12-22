@@ -9,8 +9,6 @@ from starlette.responses import Response
 
 load_dotenv()
 
-port int = os.getenv("PORT", 8000)
-
 app = FastAPI()
 
 app.add_middleware(
@@ -22,15 +20,16 @@ app.add_middleware(
 )
 
 SERVICE_MAP = {
-    "wikis": f"http://{os.getenv('ENDPOINT_WIKIS')}:{os.getenv('SERVICE_WIKIS_PORT')}/v2/wikis",
-    "entradas": f"http://{os.getenv('ENDPOINT_ENTRADAS')}:{os.getenv('SERVICE_ENTRADAS_PORT')}/v2/entradas",
-    "versiones": f"http://{os.getenv('ENDPOINT_ENTRADAS')}:{os.getenv('SERVICE_ENTRADAS_PORT')}/v2/versiones",
-    "comentarios": f"http://{os.getenv('ENDPOINT_COMENTARIOS')}:{os.getenv('SERVICE_COMENTARIOS_PORT')}/v2/comentarios",
-    "valoraciones": f"http://{os.getenv('ENDPOINT_COMENTARIOS')}:{os.getenv('SERVICE_COMENTARIOS_PORT')}/v2/valoraciones",
-    "usuarios": f"http://{os.getenv('ENDPOINT_USUARIOS')}:{os.getenv('SERVICE_USUARIOS_PORT')}/v2/usuarios",
-    "archivos": f"http://{os.getenv('ENDPOINT_ARCHIVOS')}:{os.getenv('SERVICE_ARCHIVOS_PORT')}/v2/archivos",
-    "notificaciones": f"http://{os.getenv('ENDPOINT_NOTIFICACIONES')}:{os.getenv('SERVICE_NOTIFICACIONES_PORT')}/v2/notificaciones",
-    "mapas": f"http://{os.getenv('ENDPOINT_MAPAS')}:{os.getenv('SERVICE_MAPAS_PORT')}/v2/mapas",
+    "wikis": f"http://{os.getenv('ENDPOINT_WIKIS')}:{os.getenv('SERVICE_WIKIS_PORT')}/v3/wikis",
+    "entradas": f"http://{os.getenv('ENDPOINT_ENTRADAS')}:{os.getenv('SERVICE_ENTRADAS_PORT')}/v3/entradas",
+    "versiones": f"http://{os.getenv('ENDPOINT_ENTRADAS')}:{os.getenv('SERVICE_ENTRADAS_PORT')}/v3/versiones",
+    "comentarios": f"http://{os.getenv('ENDPOINT_COMENTARIOS')}:{os.getenv('SERVICE_COMENTARIOS_PORT')}/v3/comentarios",
+    "valoraciones": f"http://{os.getenv('ENDPOINT_COMENTARIOS')}:{os.getenv('SERVICE_COMENTARIOS_PORT')}/v3/valoraciones",
+    "usuarios": f"http://{os.getenv('ENDPOINT_USUARIOS')}:{os.getenv('SERVICE_USUARIOS_PORT')}/v3/usuarios",
+    "archivos": f"http://{os.getenv('ENDPOINT_ARCHIVOS')}:{os.getenv('SERVICE_ARCHIVOS_PORT')}/v3/archivos",
+    "notificaciones": f"http://{os.getenv('ENDPOINT_NOTIFICACIONES')}:{os.getenv('SERVICE_NOTIFICACIONES_PORT')}/v3/notificaciones",
+    "mapas": f"http://{os.getenv('ENDPOINT_MAPAS')}:{os.getenv('SERVICE_MAPAS_PORT')}/v3/mapas",
+    "traducciones": f"http://{os.getenv('ENDPOINT_TRADUCCIONES')}:{os.getenv('SERVICE_TRADUCCIONES_PORT')}/v3/traducciones",
 }
 
 
@@ -69,4 +68,4 @@ async def gateway(request: Request, service: str, path: str):
 
 
 if __name__ == "__main__":
-    uvicorn.run("app:app", host="0.0.0.0", port=port, reload=True)
+    uvicorn.run("app:app", host="0.0.0.0", reload=True)

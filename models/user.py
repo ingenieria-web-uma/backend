@@ -15,7 +15,7 @@ class UserRole(str, Enum):
 class User(BaseModel):
     id: PydanticObjectId = Field(alias="_id")
     name: str
-    email: EmailStr 
+    email: EmailStr
     password: str
     role: UserRole
     wants_emails: bool
@@ -61,9 +61,11 @@ class UserNew(BaseModel):
 class UserList(BaseModel):
     users: List[User]
 
+
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+
 
 class UserRegister(BaseModel):
     name: str

@@ -16,11 +16,11 @@ from models.valoracion import (
 load_dotenv()
 MONGO_URL = os.getenv("MONGO_URL")
 
-valoraciones_bp = APIRouter(prefix="/v2/valoraciones", tags=["valoraciones"])
+valoraciones_bp = APIRouter(prefix="/v3/valoraciones", tags=["valoraciones"])
 
 # Configuración de MongoDB
 client = pymongo.MongoClient(MONGO_URL)
-db = client.laWikiv2
+db = client.laWikiv3
 valoraciones = db.valoraciones
 
 

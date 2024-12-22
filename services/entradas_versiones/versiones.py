@@ -12,11 +12,11 @@ from models.entrada import EntradaId
 load_dotenv()
 MONGO_URL = os.getenv("MONGO_URL")
 
-versiones_router = APIRouter(prefix="/v2/versiones", tags=["versiones"])
+versiones_router = APIRouter(prefix="/v3/versiones", tags=["versiones"])
 
 # Configuración de MongoDB
 client = pymongo.MongoClient(MONGO_URL)
-db = client.laWikiv2
+db = client.laWikiv3
 versiones = db.versiones
 
 
@@ -97,9 +97,7 @@ def update_version(id, datos: VersionUpdate):
         )
 
         if res.modified_count == 0:
-            raise HTTPException(
-                status_code=404, detail="Versión no modificada"
-            )
+            raise HTTPException(status_code=404, detail="Versión no modificada")
 
         return {"message": "Versión actualizada correctamente"}
     except Exception as e:
@@ -128,7 +126,9 @@ def delete_version(id: str):
 def delete_versions_by_entradaId(idEntrada: EntradaId):
     try:
         res = versiones.delete_many(idEntrada.to_mongo_dict(exclude_none=True))
-        return {"message": f"{res.deleted_count} versiones eliminadas de la entrada {idEntrada.idEntrada}"}
+        return {
+            "message": f"{res.deleted_count} versiones eliminadas de la entrada {idEntrada.idEntrada}"
+        }
     except Exception as e:
         raise HTTPException(
             status_code=400,

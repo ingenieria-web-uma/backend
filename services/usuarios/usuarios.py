@@ -14,14 +14,15 @@ load_dotenv()
 
 MONGO_URL = os.getenv("MONGO_URL")
 
-usuarios_router = APIRouter(prefix="/v2/usuarios", tags=["usuarios"])
+usuarios_router = APIRouter(prefix="/v3/usuarios", tags=["usuarios"])
 
 # Configuración de MongoDB
 client = MongoClient(MONGO_URL)
-db = client.laWikiv2
+db = client.laWikiv3
 usuarios = db.usuarios
 
-#POST /usuarios/register
+
+# POST /usuarios/register
 @usuarios_router.post("/register", response_model=User)
 def register_user(user: UserRegister):
     hashed_password = get_password_hash(user.password)
@@ -38,14 +39,15 @@ def register_user(user: UserRegister):
         raise HTTPException(
             status_code=400, detail=f"Error al registrar el usuario: {str(e)}"
         )
-    
-#POST /usuarios/login
+
+
+# POST /usuarios/login
 @usuarios_router.post("/login", response_model=Token)
 async def login_user(form_data: OAuth2PasswordRequestForm = Depends()):
     print(form_data)
     access_token = generate_token(form_data.username, form_data.password)
     return Token(access_token=access_token, token_type="bearer")
-    
+
 
 # GET /usuarios
 @usuarios_router.get("/", response_model=UserList)

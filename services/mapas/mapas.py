@@ -11,9 +11,9 @@ from models.mapa import MapaId, Mapa, MapaNew, MapaUpdate
 load_dotenv()
 MONGO_URL = os.getenv("MONGO_URL")
 
-mapas_bp = APIRouter(prefix="/v2/mapas", tags=["mapas"])
+mapas_bp = APIRouter(prefix="/v3/mapas", tags=["mapas"])
 
-db = pymongo.MongoClient(MONGO_URL).laWikiv2
+db = pymongo.MongoClient(MONGO_URL).laWikiv3
 mapas = db.mapas
 
 cache = TTLCache(maxsize=100, ttl=3600)

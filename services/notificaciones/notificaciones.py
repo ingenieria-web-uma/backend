@@ -16,11 +16,11 @@ from email_service import send_email, EmailSchema
 load_dotenv()
 MONGO_URL = os.getenv("MONGO_URL")
 
-notificaciones_bp = APIRouter(prefix="/v2/notificaciones", tags=["notificaciones"])
+notificaciones_bp = APIRouter(prefix="/v3/notificaciones", tags=["notificaciones"])
 
 # Configuración de MongoDB
 client = pymongo.MongoClient(MONGO_URL)
-db = client.laWikiv2
+db = client.laWikiv3
 notificaciones = db.notificaciones
 
 SERVICE_USUARIOS_PORT = os.getenv("SERVICE_USUARIOS_PORT")
@@ -144,13 +144,15 @@ async def update_notification(notification_id: str, update_data: NotificationUpd
     )  # Convertir ObjectId a string
     return Notification(**updated_notification)
 
-#Eliminar todas las notificaciones. ESTE METODO SE BORRARÁ CUANDO HAYA AUTENTICACION
+
+# Eliminar todas las notificaciones. ESTE METODO SE BORRARÁ CUANDO HAYA AUTENTICACION
 @notificaciones_bp.delete("/", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_all_notifications():
     result = notificaciones.delete_many({})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="No se encontraron notificaciones")
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
 
 # Eliminar Notificación (DELETE)
 @notificaciones_bp.delete("/{notification_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -179,6 +181,7 @@ async def get_user(user_id: str):
             detail=f"Error al conectar con el servicio de usuarios: {str(e)}",
         )
 
+
 ##Eliminar todas las notificaciones de un usuario
 @notificaciones_bp.delete("/usuario/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user_notifications(user_id: str):
@@ -187,7 +190,8 @@ async def delete_user_notifications(user_id: str):
         raise HTTPException(status_code=404, detail="Notificaciones no encontradas")
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
-#Contar notificaciones de un usuario sin leer
+
+# Contar notificaciones de un usuario sin leer
 @notificaciones_bp.get("/usuario/{user_id}/count")
 async def count_unread_notifications(user_id: str):
     count = notificaciones.count_documents({"user_id": user_id, "is_read": False})

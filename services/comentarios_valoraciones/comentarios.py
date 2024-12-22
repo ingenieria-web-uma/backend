@@ -6,14 +6,19 @@ from bson.objectid import ObjectId
 from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, HTTPException
 
-from models.comentario import (Comentario, ComentarioFilter, ComentarioList,
-                               ComentarioNew, ComentarioUpdate)
+from models.comentario import (
+    Comentario,
+    ComentarioFilter,
+    ComentarioList,
+    ComentarioNew,
+    ComentarioUpdate,
+)
 from models.entrada import EntradaId
 
 load_dotenv()
 MONGO_URL = os.getenv("MONGO_URL")
 
-comentarios_bp = APIRouter(prefix="/v2/comentarios", tags=["comentarios"])
+comentarios_bp = APIRouter(prefix="/v3/comentarios", tags=["comentarios"])
 
 
 SERVICE_NOTIFICACIONES_PORT = os.getenv("SERVICE_NOTIFICACIONES_PORT")
@@ -22,12 +27,14 @@ ENDPOINT_NOTIFICACIONES = os.getenv("ENDPOINT_NOTIFICACIONES")
 if os.getenv("DOCKER"):
     NOTIFICACIONES_SERVICE_URL = "http://gateway:8000/notificaciones"
 else:
-    NOTIFICACIONES_SERVICE_URL = f"http://localhost:{SERVICE_NOTIFICACIONES_PORT}/{ENDPOINT_NOTIFICACIONES}"
+    NOTIFICACIONES_SERVICE_URL = (
+        f"http://localhost:{SERVICE_NOTIFICACIONES_PORT}/{ENDPOINT_NOTIFICACIONES}"
+    )
 
 
 # Configuración de MongoDB
 client = pymongo.MongoClient(MONGO_URL)
-db = client.laWikiv2
+db = client.laWikiv3
 comentarios = db.comentarios
 
 # MicroServicio de COMENTARIOS
@@ -37,7 +44,9 @@ comentarios = db.comentarios
 @comentarios_bp.get("/")
 def view_comments(filtro: ComentarioFilter = Depends()):
     filter = filtro.to_mongo_dict(exclude_none=True)
-    comentarios_data = comentarios.find(filter).sort("fechaCreacion", pymongo.DESCENDING)
+    comentarios_data = comentarios.find(filter).sort(
+        "fechaCreacion", pymongo.DESCENDING
+    )
     return ComentarioList(
         comentarios=[comentario for comentario in comentarios_data]
     ).model_dump(exclude_none=True)
@@ -58,16 +67,19 @@ def create_comments(nuevoComentario: ComentarioNew):
         usuario = entrada["idUsuario"]
         if usuario != user_id:
             send_notification(user_id, message, entrada_id)
-        
+
         res = comentarios.insert_one(nuevoComentario.to_mongo_dict(exclude_none=True))
         print(res.inserted_id)
         if res.inserted_id:
-            return Comentario(_id=res.inserted_id, **nuevoComentario.model_dump()).model_dump()
+            return Comentario(
+                _id=res.inserted_id, **nuevoComentario.model_dump()
+            ).model_dump()
 
     except Exception as e:
         raise HTTPException(
             status_code=400, detail=f"Error al crear el comentario: {str(e)}"
         )
+
 
 # DELETE /comentarios
 @comentarios_bp.delete("/{id}")
@@ -126,13 +138,14 @@ def update_comments(id, newEntrada: ComentarioUpdate):
 
     raise HTTPException(status_code=200, detail="Comentario actualizado correctamente")
 
-#Enviar notificacion
+
+# Enviar notificacion
 def send_notification(user_id: str, message: str, entrada_id: str):
     try:
         response = requests.post(
             f"{NOTIFICACIONES_SERVICE_URL}",
             json={"user_id": user_id, "message": message, "entrada_id": entrada_id},
-            timeout=10  # Configura un timeout razonable
+            timeout=10,  # Configura un timeout razonable
         )
         response.raise_for_status()  # Lanza excepción si hay error HTTP
         print("Notificación enviada:", response.status_code)

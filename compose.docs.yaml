@@ -83,3 +83,14 @@ services:
     container_name: mapas
     ports:
       - ${SERVICE_MAPAS_PORT}:${SERVICE_MAPAS_PORT}
+
+  traducciones:
+    <<: *backend
+    build:
+      context: .
+      args:
+        SERVICE_PATH: services/traducciones
+        SERVICE_PORT: ${SERVICE_TRADUCCIONES_PORT}
+    container_name: traducciones
+    ports:
+      - ${SERVICE_TRADUCCIONES_PORT}:${SERVICE_TRADUCCIONES_PORT}

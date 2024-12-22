@@ -8,18 +8,24 @@ from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 
 from models.comentario import ComentarioList
-from models.entrada import (Entrada, EntradaFiltro, EntradaId, EntradaList,
-                            EntradaNew, EntradaUpdate)
+from models.entrada import (
+    Entrada,
+    EntradaFiltro,
+    EntradaId,
+    EntradaList,
+    EntradaNew,
+    EntradaUpdate,
+)
 from models.version import Version
 from models.wiki import Wiki
 
 load_dotenv()
 MONGO_URL = os.getenv("MONGO_URL")
 
-entradas_router = APIRouter(prefix="/v2/entradas", tags=["entradas"])
+entradas_router = APIRouter(prefix="/v3/entradas", tags=["entradas"])
 
 # Configuración de MongoDB
-db = pymongo.MongoClient(MONGO_URL).laWikiv2
+db = pymongo.MongoClient(MONGO_URL).laWikiv3
 entradas = db.entradas
 versiones = db.versiones
 
@@ -29,7 +35,9 @@ ENDPOINT_NOTIFICACIONES = os.getenv("ENDPOINT_NOTIFICACIONES")
 if os.getenv("DOCKER"):
     NOTIFICACIONES_SERVICE_URL = "http://gateway:8000/notificaciones"
 else:
-    NOTIFICACIONES_SERVICE_URL = f"http://localhost:{SERVICE_NOTIFICACIONES_PORT}/{ENDPOINT_NOTIFICACIONES}"
+    NOTIFICACIONES_SERVICE_URL = (
+        f"http://localhost:{SERVICE_NOTIFICACIONES_PORT}/{ENDPOINT_NOTIFICACIONES}"
+    )
 
 
 # GET /entradas
@@ -91,7 +99,7 @@ def update_entry(id: str, entrada: EntradaUpdate):
     entradaJson = entrada.model_dump()
     user_id = entradaJson["idUsuario"]
     message = f"Se ha actualizado la entrada: {entrada.nombre}"
-    response =  send_notification(user_id, message, id)
+    response = send_notification(user_id, message, id)
     update_result = entradas.find_one_and_update(
         {"_id": ObjectId(id)},
         {"$set": entrada.to_mongo_dict(exclude_none=True)},
@@ -112,12 +120,12 @@ async def delete_entry(id: str):
         raise HTTPException(status_code=400, detail=f"ID {id} no tiene formato valido")
 
     try:
-        #enviar notificacion de que se ha eliminado una entrada
+        # enviar notificacion de que se ha eliminado una entrada
         entrada = entradas.find_one({"_id": ObjectId(id)})
         entradaModel = Entrada(**entrada).model_dump()
         user_id = entradaModel["idUsuario"]
         message = f"Se ha eliminado la entrada: {entradaModel['nombre']}"
-        response =  send_notification(user_id, message, id)
+        response = send_notification(user_id, message, id)
         delete_result = entradas.delete_one({"_id": ObjectId(id)})
     except Exception as e:
         raise HTTPException(
@@ -144,7 +152,7 @@ def delete_entries_by_wiki(idWiki: str):
     if os.getenv("DOCKER"):
         url_base = "https://gateway:8000"
     else:
-        url_base = f"http://{entradasServiceName}:{entradasServicePort}/v2"
+        url_base = f"http://{entradasServiceName}:{entradasServicePort}/v3"
 
     try:
         for entrada in entradas.find({"idWiki": idWiki}):
@@ -179,7 +187,7 @@ def get_wiki_of_entry(id: str):
     if os.getenv("DOCKER"):
         url_base = "https://gateway:8000"
     else:
-        url_base = f"http://{wikiServiceName}:{wikiServicePort}/v2"
+        url_base = f"http://{wikiServiceName}:{wikiServicePort}/v3"
 
     try:
         wiki = requests.get(f"{url_base}/wikis/{idWiki}").json()
@@ -207,7 +215,7 @@ def get_comentarios_for_entry(id: str):
     if os.getenv("DOCKER"):
         url_base = "https://gateway:8000"
     else:
-        url_base = f"http://{comentariosServiceName}:{comentariosPort}/v2"
+        url_base = f"http://{comentariosServiceName}:{comentariosPort}/v3"
 
     try:
         comentarios = requests.get(f"{url_base}/comentarios?idEntrada={id}").json()
@@ -222,7 +230,9 @@ def get_comentarios_for_entry(id: str):
 @entradas_router.get("/{id}/last-version")
 def get_last_version_of_entry(id: str):
     try:
-        version = versiones.find_one({"idEntrada": ObjectId(id)}, sort=[("fechaEdicion", pymongo.DESCENDING)])
+        version = versiones.find_one(
+            {"idEntrada": ObjectId(id)}, sort=[("fechaEdicion", pymongo.DESCENDING)]
+        )
         if version:
             return Version(**version).model_dump()
         else:
@@ -232,14 +242,16 @@ def get_last_version_of_entry(id: str):
             status_code=400, detail=f"Error al buscar la version: {str(e)}"
         )
 
-#Enviar notificacion
+
+# Enviar notificacion
+
 
 def send_notification(user_id: str, message: str, entrada_id: str):
     try:
         response = requests.post(
             f"{NOTIFICACIONES_SERVICE_URL}",
             json={"user_id": user_id, "message": message, "entrada_id": entrada_id},
-            timeout=10  # Configura un timeout razonable
+            timeout=10,  # Configura un timeout razonable
         )
         response.raise_for_status()  # Lanza excepción si hay error HTTP
         print("Notificación enviada:", response.status_code)

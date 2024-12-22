@@ -88,3 +88,11 @@ services:
       args:
         SERVICE_PATH: services/mapas
     container_name: mapas
+
+  traducciones:
+    <<: *backend
+    build:
+      context: .
+      args:
+        SERVICE_PATH: services/traducciones
+    container_name: traducciones

@@ -73,4 +73,4 @@ class UserRegister(BaseModel):
     email: EmailStr
     password: str
     wants_emails: bool = Field(default=True)
-    role: UserRole = Field(default=UserRole.base)
+    role: UserRole = Field(default=UserRole.lector)

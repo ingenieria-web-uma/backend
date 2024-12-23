@@ -2,14 +2,15 @@ import re
 from enum import Enum
 from typing import List, Optional
 
-from pydantic import BaseModel, Field, field_validator, EmailStr
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from pydantic_mongo import PydanticObjectId
 
 
 class UserRole(str, Enum):
     admin = "admin"
-    base = "base"
+    lector = "lector"
     redactor = "redactor"
+    editor = "editor"
 
 
 class User(BaseModel):

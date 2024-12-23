@@ -4,15 +4,10 @@ import pymongo
 import requests
 from bson.objectid import ObjectId
 from dotenv import load_dotenv
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 
-from models.comentario import (
-    Comentario,
-    ComentarioFilter,
-    ComentarioList,
-    ComentarioNew,
-    ComentarioUpdate,
-)
+from models.comentario import (Comentario, ComentarioFilter, ComentarioList,
+                               ComentarioNew, ComentarioUpdate)
 from models.entrada import EntradaId
 
 load_dotenv()
@@ -54,7 +49,7 @@ def view_comments(filtro: ComentarioFilter = Depends()):
 
 # POST /comentarios
 @comentarios_bp.post("/")
-def create_comments(nuevoComentario: ComentarioNew):
+def create_comments(nuevoComentario: ComentarioNew, request: Request):
     try:
         ## Enviar notificación
         comentarioModel = nuevoComentario.model_dump()
@@ -65,8 +60,10 @@ def create_comments(nuevoComentario: ComentarioNew):
         entrada = requests.get(f"http://gateway:8000/entradas/{entrada_id}")
         entrada = entrada.json()
         usuario = entrada["idUsuario"]
+        # TODO cambiar el id del usuario en entradas a tipo str (googleId)
+        headers = request.headers.get("Authorization")
         if usuario != user_id:
-            send_notification(user_id, message, entrada_id)
+            send_notification(user_id, message, entrada_id, headers)
 
         res = comentarios.insert_one(nuevoComentario.to_mongo_dict(exclude_none=True))
         print(res.inserted_id)
@@ -140,11 +137,12 @@ def update_comments(id, newEntrada: ComentarioUpdate):
 
 
 # Enviar notificacion
-def send_notification(user_id: str, message: str, entrada_id: str):
+def send_notification(user_id: str, message: str, entrada_id: str, headers: str):
     try:
         response = requests.post(
             f"{NOTIFICACIONES_SERVICE_URL}",
             json={"user_id": user_id, "message": message, "entrada_id": entrada_id},
+            headers={"Authorization": headers},
             timeout=10,  # Configura un timeout razonable
         )
         response.raise_for_status()  # Lanza excepción si hay error HTTP

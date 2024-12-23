@@ -9,7 +9,7 @@ from models.baseMongo import MongoBase
 
 
 class ComentarioFilter(BaseModel, MongoBase):
-    idUsuario: Optional[PydanticObjectId] = Query(None)
+    idUsuario: Optional[str] = Query(None)
     idEntrada: Optional[PydanticObjectId] = Query(None)
     contenido: Annotated[Optional[str], Field(validate_default=True)] = Query(None)
     editado: Optional[bool] = Query(None)
@@ -23,7 +23,7 @@ class ComentarioFilter(BaseModel, MongoBase):
 
 class Comentario(BaseModel, MongoBase):
     id: PydanticObjectId = Field(alias="_id")
-    idUsuario: PydanticObjectId
+    idUsuario: str
     idEntrada: PydanticObjectId
     contenido: str
     fechaCreacion: datetime
@@ -31,7 +31,7 @@ class Comentario(BaseModel, MongoBase):
 
 
 class ComentarioNew(BaseModel, MongoBase):
-    idUsuario: PydanticObjectId
+    idUsuario: str
     idEntrada: PydanticObjectId
     contenido: str
     fechaCreacion: datetime = Field(default_factory=datetime.now)

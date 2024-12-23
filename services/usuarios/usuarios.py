@@ -1,14 +1,13 @@
 import json
-from bson import ObjectId
-from fastapi import APIRouter, HTTPException, Depends
-from pymongo import MongoClient
-from dotenv import load_dotenv
-from models.user import User, UserList, UserNew, UserUpdate, UserRegister
-from models.token import Token
-from typing import Optional
-from auth import get_password_hash, generate_token
-from fastapi.security import OAuth2PasswordRequestForm
 import os
+from typing import Optional
+
+from bson import ObjectId
+from dotenv import load_dotenv
+from fastapi import APIRouter, Depends, HTTPException
+from pymongo import MongoClient
+
+from models.user import UserList, UserNew
 
 load_dotenv()
 
@@ -23,30 +22,40 @@ usuarios = db.usuarios
 
 
 # POST /usuarios/register
-@usuarios_router.post("/register", response_model=User)
-def register_user(user: UserRegister):
-    hashed_password = get_password_hash(user.password)
-    print(hashed_password)
-    user_dict = user.model_dump()
-    user_dict["password"] = hashed_password
-    try:
-        result = usuarios.insert_one(user_dict)
-        new_user = usuarios.find_one({"_id": result.inserted_id})
-        new_user["_id"] = str(new_user["_id"])
-        print(new_user)
-        return User(**new_user)
-    except Exception as e:
-        raise HTTPException(
-            status_code=400, detail=f"Error al registrar el usuario: {str(e)}"
-        )
+# @usuarios_router.post("/register", response_model=User)
+# def register_user(user: UserRegister):
+#     hashed_password = get_password_hash(user.password)
+#     print(hashed_password)
+#     user_dict = user.model_dump()
+#     user_dict["password"] = hashed_password
+#     try:
+#         result = usuarios.insert_one(user_dict)
+#         new_user = usuarios.find_one({"_id": result.inserted_id})
+#         new_user["_id"] = str(new_user["_id"])
+#         print(new_user)
+#         return User(**new_user)
+#     except Exception as e:
+#         raise HTTPException(
+#             status_code=400, detail=f"Error al registrar el usuario: {str(e)}"
+#         )
 
 
 # POST /usuarios/login
-@usuarios_router.post("/login", response_model=Token)
-async def login_user(form_data: OAuth2PasswordRequestForm = Depends()):
-    print(form_data)
-    access_token = generate_token(form_data.username, form_data.password)
-    return Token(access_token=access_token, token_type="bearer")
+@usuarios_router.post("/login")
+async def login_user(userData: UserNew):
+    try:
+        user = usuarios.find_one({"googleId": userData.googleId})
+        if user:
+            usuarios.update_one(
+                {"googleId": userData.googleId},
+                {"$set": {"access_token": userData.access_token}},
+            )
+        else:
+            usuarios.insert_one(userData.to_mongo_dict(exclude_none=True))
+    except Exception as e:
+        raise HTTPException(
+            status_code=400, detail=f"Error al iniciar sesión: {str(e)}"
+        )
 
 
 # GET /usuarios
@@ -75,7 +84,7 @@ def get_users(
 @usuarios_router.get("/{id}")
 def get_user_by_id(id: str):
     try:
-        user = usuarios.find_one({"_id": ObjectId(id)})
+        user = usuarios.find_one({"googleId": id})
         if user:
             user["_id"] = str(user["_id"])
             return user
@@ -88,44 +97,44 @@ def get_user_by_id(id: str):
 
 
 # POST /usuarios
-@usuarios_router.post("/", response_model=User)
-def create_user(user: UserNew):
-    try:
-        user_dump = user.model_dump()
-        user_id = usuarios.insert_one(user_dump).inserted_id
-        user = usuarios.find_one({"_id": ObjectId(user_id)})
-        return user
-    except Exception as e:
-        raise HTTPException(
-            status_code=400, detail=f"Error al crear el usuario: {str(e)}"
-        )
+# @usuarios_router.post("/", response_model=User)
+# def create_user(user: UserNew):
+#     try:
+#         user_dump = user.model_dump()
+#         user_id = usuarios.insert_one(user_dump).inserted_id
+#         user = usuarios.find_one({"_id": ObjectId(user_id)})
+#         return user
+#     except Exception as e:
+#         raise HTTPException(
+#             status_code=400, detail=f"Error al crear el usuario: {str(e)}"
+#         )
 
 
 # PUT /usuarios/<id>
-@usuarios_router.put("/{id}", response_model=User)
-def update_user(id: str, user: UserUpdate):
-    try:
-        user_dump = user.model_dump(
-            exclude_unset=True
-        )  # Exclude fields that were not set
-        user_dump = {
-            k: v for k, v in user_dump.items() if v is not None
-        }  # Remove fields with None values
-        if not user_dump:
-            raise HTTPException(status_code=400, detail="No fields provided for update")
-        result = usuarios.update_one({"_id": ObjectId(id)}, {"$set": user_dump})
-        if result.matched_count == 0:
-            raise HTTPException(status_code=404, detail="Usuario no encontrado")
-        user = usuarios.find_one({"_id": ObjectId(id)})
-        if user:
-            user["_id"] = str(user["_id"])  # Convert ObjectId to string
-            return user
-        else:
-            raise HTTPException(status_code=404, detail="Usuario no encontrado")
-    except Exception as e:
-        raise HTTPException(
-            status_code=400, detail=f"Error al actualizar el usuario: {str(e)}"
-        )
+# @usuarios_router.put("/{id}", response_model=User)
+# def update_user(id: str, user: UserUpdate):
+#     try:
+#         user_dump = user.model_dump(
+#             exclude_unset=True
+#         )  # Exclude fields that were not set
+#         user_dump = {
+#             k: v for k, v in user_dump.items() if v is not None
+#         }  # Remove fields with None values
+#         if not user_dump:
+#             raise HTTPException(status_code=400, detail="No fields provided for update")
+#         result = usuarios.update_one({"_id": ObjectId(id)}, {"$set": user_dump})
+#         if result.matched_count == 0:
+#             raise HTTPException(status_code=404, detail="Usuario no encontrado")
+#         user = usuarios.find_one({"_id": ObjectId(id)})
+#         if user:
+#             user["_id"] = str(user["_id"])  # Convert ObjectId to string
+#             return user
+#         else:
+#             raise HTTPException(status_code=404, detail="Usuario no encontrado")
+#     except Exception as e:
+#         raise HTTPException(
+#             status_code=400, detail=f"Error al actualizar el usuario: {str(e)}"
+#         )
 
 
 # DELETE /usuarios/<id>

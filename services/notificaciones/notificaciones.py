@@ -1,17 +1,14 @@
-import httpx
 import os
 
-from fastapi import APIRouter, HTTPException, Response, status
+import httpx
 import pymongo
 from bson.objectid import ObjectId
 from dotenv import load_dotenv
-from models.notificacion import (
-    Notification,
-    NotificationList,
-    NotificationNew,
-    NotificationUpdate,
-)
-from email_service import send_email, EmailSchema
+from email_service import EmailSchema, send_email
+from fastapi import APIRouter, HTTPException, Response, status
+
+from models.notificacion import (Notification, NotificationList,
+                                 NotificationNew, NotificationUpdate)
 
 load_dotenv()
 MONGO_URL = os.getenv("MONGO_URL")

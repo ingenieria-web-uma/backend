@@ -1,19 +1,16 @@
 import os
+import json
 from models.traduccion import TraduccionRequest
-import pymongo
 from dotenv import load_dotenv
 from fastapi import APIRouter, HTTPException
 import httpx
 from typing import Dict
 
 load_dotenv()
-MONGO_URL = os.getenv("MONGO_URL")
 GTRANSLATE_API_KEY = os.getenv("GTRANSLATE_API_KEY")
+IDIOMAS_FILE = "idiomas.json"
 
 traducciones_bp = APIRouter(prefix="/v3/traducciones", tags=["traducciones"])
-
-db = pymongo.MongoClient(MONGO_URL).laWikiv3
-traducciones = db.traducciones
 
 
 async def traducir_google(textos: Dict[str, str], target_lang: str):
@@ -58,6 +55,11 @@ async def traducir_texto(request: TraduccionRequest):
 @traducciones_bp.get("/idiomas")
 async def get_idiomas():
     try:
+        if os.path.exists(IDIOMAS_FILE):
+            with open(IDIOMAS_FILE, "r", encoding="utf-8") as file:
+                idiomas_data = json.load(file)
+            return {"languages": idiomas_data["languages"]}
+
         url = f"https://translation.googleapis.com/language/translate/v2/languages?key={GTRANSLATE_API_KEY}&target=es"
 
         async with httpx.AsyncClient() as client:
@@ -68,8 +70,12 @@ async def get_idiomas():
                 status_code=response.status_code, detail="Error al obtener idiomas"
             )
 
-        languages_data = response.json()
-        return {"languages": languages_data["data"]["languages"]}
+        languages_data = response.json()["data"]["languages"]
+
+        with open(IDIOMAS_FILE, "w", encoding="utf-8") as file:
+            json.dump({"languages": languages_data}, file, ensure_ascii=False, indent=4)
+
+        return {"languages": languages_data}
 
     except Exception as e:
         raise HTTPException(

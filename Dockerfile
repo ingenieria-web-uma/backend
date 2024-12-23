@@ -12,7 +12,7 @@ RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
 
 
 COPY ./models /code/models
-
+COPY ./middlewares /code/middlewares
 
 ARG SERVICE_PATH=./app.py
 COPY ${SERVICE_PATH} /code/

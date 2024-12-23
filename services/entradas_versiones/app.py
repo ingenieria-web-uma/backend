@@ -6,6 +6,7 @@ from entradas import entradas_router
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from versiones import versiones_router
+from middlewares.auth import AuthMiddleware
 
 load_dotenv()
 
@@ -14,6 +15,8 @@ app = FastAPI()
 # Registrar las rutas
 app.include_router(entradas_router)
 app.include_router(versiones_router)
+
+app.add_middleware(AuthMiddleware)
 
 app.add_middleware(
     CORSMiddleware,

@@ -5,6 +5,7 @@ from archivos import archivos_bp
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from middlewares.auth import AuthMiddleware
 
 load_dotenv()
 
@@ -12,6 +13,9 @@ app = FastAPI()
 
 # Registrar los microservicios como Blueprints
 app.include_router(archivos_bp)
+
+
+app.add_middleware(AuthMiddleware)
 
 app.add_middleware(
     CORSMiddleware,

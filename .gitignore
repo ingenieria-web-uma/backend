@@ -1,6 +1,7 @@
 # Virtual Environment folders
 .venv
 venv
+.env
 env
 get-pip.py
 get-pip.py.1

@@ -5,17 +5,13 @@ import pymongo
 import requests
 from bson.objectid import ObjectId
 from dotenv import load_dotenv
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import (APIRouter, Depends, HTTPException, Request, Response,
+                     status)
 
+from middlewares.auth import role_required
 from models.comentario import ComentarioList
-from models.entrada import (
-    Entrada,
-    EntradaFiltro,
-    EntradaId,
-    EntradaList,
-    EntradaNew,
-    EntradaUpdate,
-)
+from models.entrada import (Entrada, EntradaFiltro, EntradaId, EntradaList,
+                            EntradaNew, EntradaUpdate)
 from models.version import Version
 from models.wiki import Wiki
 
@@ -71,11 +67,11 @@ def get_entry_by_id(id: str):
 
 # POST /entradas
 @entradas_router.post("/", response_model=EntradaId, status_code=201)
-def create_entry(entrada: EntradaNew):
+def create_entry(entrada: EntradaNew, user=Depends(role_required(["admin", "redactor"]))):
     try:
         entrada_dump = entrada.to_mongo_dict(exclude_none=True)
         entrada_id = entradas.insert_one(entrada_dump).inserted_id
-        return EntradaId(idEntrada=str(entrada_id))
+        return EntradaId(idEntrada=(entrada_id))
     except Exception as e:
         raise HTTPException(
             status_code=400, detail=f"Error al crear la entrada: {str(e)}"
@@ -84,7 +80,7 @@ def create_entry(entrada: EntradaNew):
 
 # PUT /entradas/<id>
 @entradas_router.put("/{id}", response_model=Entrada)
-def update_entry(id: str, entrada: EntradaUpdate):
+def update_entry(id: str, entrada: EntradaUpdate, request:Request):
     if not ObjectId.is_valid(id):
         raise HTTPException(status_code=400, detail=f"ID {id} no tiene formato valido")
 
@@ -99,7 +95,8 @@ def update_entry(id: str, entrada: EntradaUpdate):
     entradaJson = entrada.model_dump()
     user_id = entradaJson["idUsuario"]
     message = f"Se ha actualizado la entrada: {entrada.nombre}"
-    response = send_notification(user_id, message, id)
+    headers = request.headers.get("Authorization")
+    response = send_notification(user_id, message, id, headers)
     update_result = entradas.find_one_and_update(
         {"_id": ObjectId(id)},
         {"$set": entrada.to_mongo_dict(exclude_none=True)},
@@ -115,7 +112,7 @@ def update_entry(id: str, entrada: EntradaUpdate):
 
 # DELETE /entradas/<id>
 @entradas_router.delete("/{id}")
-async def delete_entry(id: str):
+async def delete_entry(id: str, request: Request):
     if not ObjectId.is_valid(id):
         raise HTTPException(status_code=400, detail=f"ID {id} no tiene formato valido")
 
@@ -125,7 +122,8 @@ async def delete_entry(id: str):
         entradaModel = Entrada(**entrada).model_dump()
         user_id = entradaModel["idUsuario"]
         message = f"Se ha eliminado la entrada: {entradaModel['nombre']}"
-        response = send_notification(user_id, message, id)
+        headers = request.headers.get("Authorization")
+        send_notification(user_id, message, id, headers)
         delete_result = entradas.delete_one({"_id": ObjectId(id)})
     except Exception as e:
         raise HTTPException(
@@ -246,16 +244,17 @@ def get_last_version_of_entry(id: str):
 # Enviar notificacion
 
 
-def send_notification(user_id: str, message: str, entrada_id: str):
+def send_notification(user_id: str, message: str, entrada_id: str, headers: str|None):
     try:
         response = requests.post(
             f"{NOTIFICACIONES_SERVICE_URL}",
             json={"user_id": user_id, "message": message, "entrada_id": entrada_id},
+            headers={"Authorization": headers},
             timeout=10,  # Configura un timeout razonable
         )
         response.raise_for_status()  # Lanza excepción si hay error HTTP
         print("Notificación enviada:", response.status_code)
     except requests.RequestException as e:
         raise HTTPException(
-            status_code=500, detail=f"Error al enviar la notificación: {str(e)}"
+                status_code=500, detail=f"Error al enviar la notificación: {str(e)}"
         )

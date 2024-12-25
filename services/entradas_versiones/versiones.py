@@ -1,13 +1,14 @@
 import os
+from datetime import datetime
 
 import pymongo
 from bson.objectid import ObjectId
 from dotenv import load_dotenv
 from fastapi import APIRouter, HTTPException, Response, status
-from datetime import datetime
 
-from models.version import VersionId, Version, VersionList, VersionNew, VersionUpdate
 from models.entrada import EntradaId
+from models.version import (Version, VersionId, VersionList, VersionNew,
+                            VersionUpdate)
 
 load_dotenv()
 MONGO_URL = os.getenv("MONGO_URL")
@@ -31,13 +32,12 @@ def get_versions(
     query = {}
 
     if idUsuario:
-        if ObjectId.is_valid(idUsuario):
-            query["idUsuario"] = ObjectId(idUsuario)
-        else:
-            raise HTTPException(
-                status_code=400,
-                detail=f"ID de usuario {idUsuario} no tiene formato valido",
-            )
+        query["idUsuario"] = idUsuario
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail=f"ID de usuario {idUsuario} no tiene formato valido",
+        )
     if idEntrada:
         if ObjectId.is_valid(idEntrada):
             query["idEntrada"] = ObjectId(idEntrada)

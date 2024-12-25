@@ -4,10 +4,10 @@ from typing import Optional
 
 from bson import ObjectId
 from dotenv import load_dotenv
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pymongo import MongoClient
 
-from models.user import UserList, UserNew
+from models.user import User, UserList, UserNew
 
 load_dotenv()
 
@@ -42,16 +42,24 @@ usuarios = db.usuarios
 
 # POST /usuarios/login
 @usuarios_router.post("/login")
-async def login_user(userData: UserNew):
+async def login_user(userData: UserNew, requset: Request):
     try:
-        user = usuarios.find_one({"googleId": userData.googleId})
+        user = usuarios.find_one({"email": userData.email})
         if user:
             usuarios.update_one(
-                {"googleId": userData.googleId},
-                {"$set": {"access_token": userData.access_token}},
+                {"email": userData.email},
+                {"$set": {"access_token": userData.access_token, "googleId":userData.googleId, "expires_in":userData.expires_in, "name":userData.name, "wants_emails":userData.wants_emails, "profile_picture":userData.profile_picture}},
             )
         else:
             usuarios.insert_one(userData.to_mongo_dict(exclude_none=True))
+
+        print(requset.state.user.get("role"))
+
+        # return user
+        user = usuarios.find_one({"email": userData.email})
+        raise HTTPException(status_code=200, detail=User(**user).model_dump())
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=400, detail=f"Error al iniciar sesión: {str(e)}"

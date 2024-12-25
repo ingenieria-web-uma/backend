@@ -5,7 +5,7 @@ import pymongo
 from bson.objectid import ObjectId
 from dotenv import load_dotenv
 from email_service import EmailSchema, send_email
-from fastapi import APIRouter, HTTPException, Response, status
+from fastapi import APIRouter, HTTPException, Request, Response, status
 
 from models.notificacion import (Notification, NotificationList,
                                  NotificationNew, NotificationUpdate)
@@ -39,7 +39,7 @@ else:
 
 
 @notificaciones_bp.post("/")
-async def create_notification(notification: NotificationNew):
+async def create_notification(notification: NotificationNew, request:Request):
     # Buscar al usuario en la colección de usuarios
     user = await get_user(notification.user_id)
     if not user:

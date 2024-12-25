@@ -18,7 +18,7 @@ class Entrada(BaseModel, MongoBase):
     idVersionActual: PydanticObjectId
     nombre: str
     slug: str
-    idUsuario: PydanticObjectId
+    idUsuario: str
     nombreUsuario: str
     fechaCreacion: datetime
 
@@ -29,7 +29,7 @@ class EntradaUpdate(BaseModel, MongoBase):
     nombre: Optional[str] = None
     slug: Optional[str] = None
     nombreUsuario: Optional[str] = None
-    idUsuario: Optional[PydanticObjectId] = None
+    idUsuario: Optional[str] = None
 
     @model_validator(mode="before")
     def generar_slug(cls, valores):
@@ -49,7 +49,7 @@ class EntradaNew(BaseModel, MongoBase):
     nombre: str
     slug: Optional[str] = None
     nombreUsuario: str
-    idUsuario: PydanticObjectId
+    idUsuario: str
     fechaCreacion: datetime = Field(default_factory=datetime.now)
 
     @model_validator(mode="before")
@@ -70,7 +70,7 @@ class EntradaFiltro(BaseModel, MongoBase):
     idWiki: Optional[PydanticObjectId] = None
     idVersionActual: Optional[PydanticObjectId] = None
     nombre: Annotated[Optional[str], Field(validate_default=True)] = Query(None)
-    idUsuario: Optional[PydanticObjectId] = None
+    idUsuario: Optional[str] = None
     nombreUsuario: Annotated[Optional[str], Field(validate_default=True)] = Query(None)
 
     @field_validator("nombre")

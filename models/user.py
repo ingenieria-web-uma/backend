@@ -20,6 +20,7 @@ class User(BaseModel, MongoBase):
     googleId: str
     name: str
     email: EmailStr
+    profile_picture: str
     access_token: str
     expires_in: int
     role: UserRole
@@ -29,6 +30,7 @@ class UserUpdate(BaseModel, MongoBase):
     googleId: Optional[str] = None
     name: Optional[str] = None
     email: Optional[EmailStr] = None
+    profile_picture: Optional[str] = None
     access_token: Optional[str] = None
     expires_in: Optional[int] = None
     role: Optional[UserRole] = None
@@ -38,9 +40,10 @@ class UserNew(BaseModel, MongoBase):
     googleId: str
     name: str
     email: EmailStr
+    profile_picture: str
     access_token: str
     expires_in: int
-    role: UserRole = Field(default=UserRole.admin)
+    role: UserRole = Field(default=UserRole.lector)
     wants_emails: bool = Field(default=True)
 
 

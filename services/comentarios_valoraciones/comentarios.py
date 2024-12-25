@@ -6,6 +6,7 @@ from bson.objectid import ObjectId
 from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, HTTPException, Request
 
+from middlewares.auth import role_required
 from models.comentario import (Comentario, ComentarioFilter, ComentarioList,
                                ComentarioNew, ComentarioUpdate)
 from models.entrada import EntradaId

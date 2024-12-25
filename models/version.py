@@ -13,21 +13,21 @@ class VersionId(BaseModel, MongoBase):
 
 class Version(BaseModel, MongoBase):
     id: PydanticObjectId = Field(alias="_id")
-    idUsuario: PydanticObjectId
+    idUsuario: str
     idEntrada: PydanticObjectId
     contenido: str
     fechaEdicion: datetime = Field(default_factory=datetime.now)
 
 
 class VersionNew(BaseModel, MongoBase):
-    idUsuario: PydanticObjectId
+    idUsuario: str
     idEntrada: PydanticObjectId
     contenido: str
     fechaEdicion: datetime = Field(default_factory=datetime.now)
 
 
 class VersionUpdate(BaseModel, MongoBase):
-    idUsuario: Optional[PydanticObjectId] = None
+    idUsuario: Optional[str] = None
     idEntrada: Optional[PydanticObjectId] = None
     contenido: Optional[str] = None
     fechaEdicion: datetime = Field(default_factory=datetime.now)

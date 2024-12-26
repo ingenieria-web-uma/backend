@@ -1,6 +1,5 @@
 import os
 
-import httpx
 import pymongo
 import requests
 from bson.objectid import ObjectId

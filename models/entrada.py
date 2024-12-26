@@ -21,6 +21,7 @@ class Entrada(BaseModel, MongoBase):
     idUsuario: str
     nombreUsuario: str
     fechaCreacion: datetime
+    lang: str = "es"
 
 
 class EntradaUpdate(BaseModel, MongoBase):
@@ -51,6 +52,7 @@ class EntradaNew(BaseModel, MongoBase):
     nombreUsuario: str
     idUsuario: str
     fechaCreacion: datetime = Field(default_factory=datetime.now)
+    lang: str = "es"
 
     @model_validator(mode="before")
     def generar_slug(cls, valores):
@@ -72,6 +74,7 @@ class EntradaFiltro(BaseModel, MongoBase):
     nombre: Annotated[Optional[str], Field(validate_default=True)] = Query(None)
     idUsuario: Optional[str] = None
     nombreUsuario: Annotated[Optional[str], Field(validate_default=True)] = Query(None)
+    lang: Optional[str] = None
 
     @field_validator("nombre")
     def make_regex(cls, v):

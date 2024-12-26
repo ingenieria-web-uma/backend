@@ -4,11 +4,11 @@ from datetime import datetime
 import pymongo
 from bson.objectid import ObjectId
 from dotenv import load_dotenv
-from fastapi import APIRouter, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 
 from models.entrada import EntradaId
-from models.version import (Version, VersionId, VersionList, VersionNew,
-                            VersionUpdate)
+from models.version import (Version, VersionFilter, VersionId, VersionList,
+                            VersionNew, VersionUpdate)
 
 load_dotenv()
 MONGO_URL = os.getenv("MONGO_URL")
@@ -23,35 +23,10 @@ versiones = db.versiones
 
 # GET /versiones
 @versiones_router.get("/", response_model=VersionList)
-def get_versions(
-    idUsuario: str = None,
-    idEntrada: str = None,
-    contenido: str = None,
-    fechaEdicion: datetime = None,
-):
-    query = {}
+def get_versions(filter: VersionFilter = Depends()):
 
-    if idUsuario:
-        query["idUsuario"] = idUsuario
-    else:
-        raise HTTPException(
-            status_code=400,
-            detail=f"ID de usuario {idUsuario} no tiene formato valido",
-        )
-    if idEntrada:
-        if ObjectId.is_valid(idEntrada):
-            query["idEntrada"] = ObjectId(idEntrada)
-        else:
-            raise HTTPException(
-                status_code=400,
-                detail=f"ID de entrada {idEntrada} no tiene formato valido",
-            )
-    if contenido:
-        query["contenido"] = {"$regex": contenido, "$options": "i"}
-    if fechaEdicion:
-        query["fechaEdicion"] = {"$regex": fechaEdicion, "$options": "i"}
-
-    return VersionList(versiones=versiones.find(query))
+    query = filter.to_mongo_dict(exclude_none=True)
+    return VersionList(versiones=versiones.find(query).sort("fechaEdicion", -1))
 
 
 # GET /versiones/<id>

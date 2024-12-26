@@ -80,7 +80,7 @@ def create_entry(entrada: EntradaNew, user=Depends(role_required(["admin", "reda
 
 # PUT /entradas/<id>
 @entradas_router.put("/{id}", response_model=Entrada)
-def update_entry(id: str, entrada: EntradaUpdate, request:Request):
+def update_entry(id: str, entrada: EntradaUpdate, request:Request, user=Depends(role_required(["admin", "redactor", "editor"]))):
     if not ObjectId.is_valid(id):
         raise HTTPException(status_code=400, detail=f"ID {id} no tiene formato valido")
 
@@ -112,7 +112,7 @@ def update_entry(id: str, entrada: EntradaUpdate, request:Request):
 
 # DELETE /entradas/<id>
 @entradas_router.delete("/{id}")
-async def delete_entry(id: str, request: Request):
+async def delete_entry(id: str, request: Request, user=Depends(role_required(["admin", "editor"]))):
     if not ObjectId.is_valid(id):
         raise HTTPException(status_code=400, detail=f"ID {id} no tiene formato valido")
 
@@ -138,7 +138,7 @@ async def delete_entry(id: str, request: Request):
 
 # DELETE /entradas/ : JSON {idWiki:"xxxxxxxxx"} Borra las entradas asociadas a una wiki
 @entradas_router.delete("/")
-def delete_entries_by_wiki(idWiki: str):
+def delete_entries_by_wiki(idWiki: str, user=Depends(role_required(["admin", "editor"]))):
     if not ObjectId.is_valid(idWiki):
         raise HTTPException(
             status_code=400, detail=f"ID {idWiki} no tiene formato valido"

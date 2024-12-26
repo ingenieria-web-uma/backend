@@ -6,6 +6,7 @@ from bson.objectid import ObjectId
 from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, HTTPException
 
+from middlewares.auth import role_required
 from models.wiki import Wiki, WikiFilter, WikiList, WikiNew, WikiUpdate
 
 load_dotenv()
@@ -49,7 +50,7 @@ def get_wikis_byId(id: str):
 
 
 @wikis_bp.post("/", response_model=Wiki)
-async def create_wiki(wiki: WikiNew):
+async def create_wiki(wiki: WikiNew, user=Depends(role_required(["admin", "editor"]))):
     try:
         wiki_dump = wiki.model_dump()
         wiki_id = wikis.insert_one(wiki_dump).inserted_id
@@ -63,7 +64,7 @@ async def create_wiki(wiki: WikiNew):
 
 
 @wikis_bp.put("/{id}")
-def update_wiki(id: str, wikiUpdate: WikiUpdate):
+def update_wiki(id: str, wikiUpdate: WikiUpdate, user=Depends(role_required(["admin", "editor"]))):
     try:
         dataFormateada = {"$set": wikiUpdate.to_mongo_dict(exclude_none=True)}
         respuesta = wikis.find_one_and_update(
@@ -86,7 +87,7 @@ def update_wiki(id: str, wikiUpdate: WikiUpdate):
 
 
 @wikis_bp.delete("/{id}")
-def delete_wiki(id: str):
+def delete_wiki(id: str, user = Depends(role_required(["admin", "editor"]))):
     try:
         borrado = wikis.delete_one({"_id": ObjectId(id)})
         if borrado.deleted_count == 0:

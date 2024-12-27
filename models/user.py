@@ -27,9 +27,7 @@ class User(BaseModel, MongoBase):
     wants_emails: bool
 
 class UserUpdate(BaseModel, MongoBase):
-    googleId: Optional[str] = None
     name: Optional[str] = None
-    email: Optional[EmailStr] = None
     profile_picture: Optional[str] = None
     access_token: Optional[str] = None
     expires_in: Optional[int] = None

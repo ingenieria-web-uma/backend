@@ -118,30 +118,28 @@ def get_user_by_id(id: str):
 
 
 # PUT /usuarios/<id>
-# @usuarios_router.put("/{id}", response_model=User)
-# def update_user(id: str, user: UserUpdate):
-#     try:
-#         user_dump = user.model_dump(
-#             exclude_unset=True
-#         )  # Exclude fields that were not set
-#         user_dump = {
-#             k: v for k, v in user_dump.items() if v is not None
-#         }  # Remove fields with None values
-#         if not user_dump:
-#             raise HTTPException(status_code=400, detail="No fields provided for update")
-#         result = usuarios.update_one({"_id": ObjectId(id)}, {"$set": user_dump})
-#         if result.matched_count == 0:
-#             raise HTTPException(status_code=404, detail="Usuario no encontrado")
-#         user = usuarios.find_one({"_id": ObjectId(id)})
-#         if user:
-#             user["_id"] = str(user["_id"])  # Convert ObjectId to string
-#             return user
-#         else:
-#             raise HTTPException(status_code=404, detail="Usuario no encontrado")
-#     except Exception as e:
-#         raise HTTPException(
-#             status_code=400, detail=f"Error al actualizar el usuario: {str(e)}"
-#         )
+@usuarios_router.put("/{id}", response_model=User)
+def update_user(id: str, user: UserUpdate):
+    try:
+        user_dump = user.model_dump(
+            exclude_unset=True,
+            exclude_none=True
+        )
+        if not user_dump:
+            raise HTTPException(status_code=400, detail="No fields provided for update")
+        result = usuarios.update_one({"_id": ObjectId(id)}, {"$set": user_dump})
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        user = usuarios.find_one({"_id": ObjectId(id)})
+        if user:
+            user["_id"] = str(user["_id"])  # Convert ObjectId to string
+            return user
+        else:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    except Exception as e:
+        raise HTTPException(
+            status_code=400, detail=f"Error al actualizar el usuario: {str(e)}"
+        )
 
 
 # PUT /usuarios/<id>/wants_emails

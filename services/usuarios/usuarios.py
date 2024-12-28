@@ -1,11 +1,12 @@
 import os
 from typing import Optional
 
-from bson import ObjectId
+from bson import ObjectId, errors
 from dotenv import load_dotenv
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pymongo import MongoClient
 
+from middlewares.auth import role_required
 from models.user import User, UserList, UserNew, UserUpdate
 
 load_dotenv()
@@ -118,28 +119,33 @@ def get_user_by_id(id: str):
 
 
 # PUT /usuarios/<id>
-@usuarios_router.put("/{id}", response_model=User)
-def update_user(id: str, user: UserUpdate):
+@usuarios_router.put("/{googleId}")
+def update_user(googleId: str, user_update: UserUpdate, user=Depends(role_required(["admin"]))):
+    print(user_update)
+    user_dump = user_update.model_dump(
+        exclude_unset=True,
+        exclude_none=True
+    )
+    print(not user_dump)
+    if not user_dump:
+        raise HTTPException(status_code=400, detail="No fields provided for update")
     try:
-        user_dump = user.model_dump(
-            exclude_unset=True,
-            exclude_none=True
-        )
-        if not user_dump:
-            raise HTTPException(status_code=400, detail="No fields provided for update")
-        result = usuarios.update_one({"_id": ObjectId(id)}, {"$set": user_dump})
-        if result.matched_count == 0:
-            raise HTTPException(status_code=404, detail="Usuario no encontrado")
-        user = usuarios.find_one({"_id": ObjectId(id)})
-        if user:
-            user["_id"] = str(user["_id"])  # Convert ObjectId to string
-            return user
-        else:
-            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        result = usuarios.update_one({"googleId": googleId}, {"$set": user_dump})
     except Exception as e:
-        raise HTTPException(
-            status_code=400, detail=f"Error al actualizar el usuario: {str(e)}"
-        )
+        raise HTTPException(status_code=400, detail=f"Error: {str(e)}")
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    
+    try:
+        updated_user = usuarios.find_one({"googleId": googleId})
+        if updated_user:
+            updated_user["_id"] = str(updated_user["_id"])
+            return updated_user
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error: {str(e)}")
+
+    
 
 
 # PUT /usuarios/<id>/wants_emails
@@ -169,10 +175,10 @@ def update_wants_emails(googleId: str, user_update: UserUpdate):
 
 
 # DELETE /usuarios/<id>
-@usuarios_router.delete("/{id}")
-def delete_user(id: str):
+@usuarios_router.delete("/{googleId}")
+def delete_user(googleId: str):
     try:
-        result = usuarios.delete_one({"_id": ObjectId(id)})
+        result = usuarios.delete_one({"googleId": googleId})
         if result.deleted_count == 0:
             raise HTTPException(status_code=404, detail="Usuario no encontrado")
         return {"message": "Usuario eliminado correctamente"}

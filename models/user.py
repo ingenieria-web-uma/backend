@@ -32,7 +32,7 @@ class UserUpdate(BaseModel, MongoBase):
     access_token: Optional[str] = None
     expires_in: Optional[int] = None
     role: Optional[UserRole] = None
-    wants_emails: bool
+    wants_emails: Optional[bool] = None
 
 class UserNew(BaseModel, MongoBase):
     googleId: str

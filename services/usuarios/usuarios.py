@@ -1,7 +1,6 @@
 import os
 from typing import Optional
 
-from bson import ObjectId, errors
 from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pymongo import MongoClient
@@ -142,34 +141,6 @@ def update_user(googleId: str, user_update: UserUpdate, user=Depends(role_requir
         if updated_user:
             updated_user["_id"] = str(updated_user["_id"])
             return updated_user
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Error: {str(e)}")
-
-    
-
-
-# PUT /usuarios/<id>/wants_emails
-@usuarios_router.put("/{googleId}/wants_emails")
-def update_wants_emails(googleId: str, user_update: UserUpdate):
-    if user_update.wants_emails is None:
-        raise HTTPException(
-            status_code=422, detail="Campo 'wants_emails' obligatorio"
-        )
-
-    try:
-        result = usuarios.update_one(
-            {"googleId": googleId},
-            {"$set": {"wants_emails": user_update.wants_emails}},
-        )
-
-        if result.matched_count == 0:
-            raise HTTPException(status_code=404, detail="Usuario no encontrado")
-
-        updated_user = usuarios.find_one({"googleId": googleId})
-        if updated_user:
-            updated_user["_id"] = str(updated_user["_id"])
-            return updated_user
-
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error: {str(e)}")
 
